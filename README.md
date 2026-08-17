@@ -57,6 +57,7 @@ You can also preview all stamp designs without Word at all:
 
 ```bash
 npm run smoke        # renders every design headlessly + writes sample-stamps.png
+npm run gallery      # regenerates the 15 landing-page gallery PNGs (assets/gallery/)
 ```
 
 Open `sample-stamps.png` to eyeball the built-in designs and edge cases.

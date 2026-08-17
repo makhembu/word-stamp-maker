@@ -3,6 +3,7 @@ dist/
 .smoke/
 sample-stamps.png
 pane-*.png
+landing.png
 *.log
 .DS_Store
 Thumbs.db
