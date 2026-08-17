@@ -23,6 +23,18 @@ page.on("console", (m) => {
 await page.goto(URL, { waitUntil: "networkidle", ignoreHTTPSErrors: true });
 await page.waitForSelector(".gallery-grid figure", { state: "visible" });
 
+// Gallery tiles use loading="lazy", so below-fold images haven't loaded yet. Flip
+// them to eager for the test so we verify the files themselves actually serve.
+await page.evaluate(() => {
+  document.querySelectorAll("img[loading='lazy']").forEach((img) => {
+    img.loading = "eager";
+  });
+});
+await page.waitForFunction(
+  () => Array.from(document.querySelectorAll(".gallery-grid img")).every((i) => i.complete && i.naturalWidth > 0),
+  { timeout: 10000 }
+);
+
 const figures = await page.evaluate(() => {
   const figs = Array.from(document.querySelectorAll(".gallery-grid figure"));
   return {
