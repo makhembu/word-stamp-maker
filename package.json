@@ -16,6 +16,7 @@
     "make-installer": "node scripts/make-installer.mjs",
     "gallery": "npx tsc src/core/renderer.ts src/core/templates.ts src/core/types.ts --outDir .smoke --module commonjs --target es2019 --skipLibCheck --esModuleInterop && node scripts/gen-gallery.mjs",
     "social": "npx tsc src/core/renderer.ts src/core/templates.ts src/core/types.ts --outDir .smoke --module commonjs --target es2019 --skipLibCheck --esModuleInterop && node scripts/gen-social-card.mjs",
+    "check-ga": "npm exec --yes --package=playwright -- node scripts/check-ga-event.mjs",
     "check-pane": "npm exec --yes --package=playwright -- node scripts/check-pane.mjs",
     "check-landing": "npm exec --yes --package=playwright -- node scripts/check-landing.mjs"
   },
