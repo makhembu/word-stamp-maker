@@ -20,7 +20,7 @@ import {
 } from "./core/document";
 import { deleteSavedDesign, loadSavedDesigns, saveDesign } from "./core/saved";
 import type { SavedDesign } from "./core/saved";
-import type { QuickPosition, StampParams, StampRecord, TextAlign, TextBlock } from "./core/types";
+import type { StampParams, StampRecord, TextAlign, TextBlock } from "./core/types";
 import { runTestSuite } from "./test/suite";
 
 // ---------- DOM helpers ----------
@@ -34,7 +34,6 @@ function val(id: string): string {
 }
 
 // ---------- State ----------
-let position: QuickPosition = "cursor";
 let editingId: string | null = null;
 let editingRecord: StampRecord | null = null;
 let stampsCache: StampRecord[] = [];
@@ -126,39 +125,6 @@ function buildFontSelect(): void {
     opt.value = f;
     opt.textContent = f;
     sel.appendChild(opt);
-  }
-}
-
-const POS_CHIPS: { value: QuickPosition; label: string }[] = [
-  { value: "cursor", label: "◎ Cursor" },
-  { value: "top-left", label: "↖" },
-  { value: "top-center", label: "↑" },
-  { value: "top-right", label: "↗" },
-  { value: "center-left", label: "←" },
-  { value: "center", label: "⊕" },
-  { value: "center-right", label: "→" },
-  { value: "bottom-left", label: "↙" },
-  { value: "bottom-center", label: "↓" },
-  { value: "bottom-right", label: "↘" },
-];
-
-function buildPosChips(): void {
-  const wrap = $("posChips");
-  wrap.innerHTML = "";
-  for (const chip of POS_CHIPS) {
-    const btn = document.createElement("button");
-    btn.type = "button";
-    btn.textContent = chip.label;
-    btn.title = chip.value;
-    btn.dataset.pos = chip.value;
-    if (chip.value === "cursor") btn.classList.add("active");
-    btn.addEventListener("click", () => {
-      position = chip.value;
-      document.querySelectorAll<HTMLElement>("#posChips button").forEach((b) => {
-        b.classList.toggle("active", b.dataset.pos === chip.value);
-      });
-    });
-    wrap.appendChild(btn);
   }
 }
 
@@ -502,8 +468,8 @@ async function applyStamp(): Promise<void> {
       editingRecord = null;
       toast("Stamp updated ✓");
     } else {
-      await insertStamp(render, params, { position });
-      toast(position === "cursor" ? "Stamp inserted at cursor ✓" : "Stamp inserted ✓");
+      await insertStamp(render, params, { position: "cursor" });
+      toast("Stamp inserted ✓");
     }
     updateEditBanner();
     await refreshManage();
@@ -789,7 +755,6 @@ function init(): void {
   buildSwatches();
   buildShapeSelect();
   buildFontSelect();
-  buildPosChips();
   bindEvents();
   refreshSavedDesigns();
   $("previewBar").hidden = false;

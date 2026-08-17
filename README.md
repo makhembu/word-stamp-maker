@@ -140,9 +140,11 @@ The critical requirement — *zero text reflow* — is achieved natively, not by
    shapes with this wrapping occupy **no space in the text flow**: no paragraphs are added,
    no blank lines appear, paragraph spacing and page breaks are untouched, tables keep their
    dimensions, and nothing gets pushed to another page.
-4. **Absolute positioning** — `shape.relativeHorizontalPosition/relativeVerticalPosition =
-   Page` plus `shape.top/left` in points place the stamp anywhere on the page (the quick
-   position presets use `document.pageSetup` geometry: page size and margins).
+4. **Positioning** — a stamp inserted at the cursor is a normal floating Word drawing that
+   you drag anywhere (margins, over tables, anywhere on the page). The API also supports
+   absolute page positioning (`relativeHorizontalPosition/relativeVerticalPosition = Page`
+   plus `top/left` in points), which the add-in uses internally to preserve a stamp's
+   exact spot when you edit or duplicate it.
 5. **After insertion it's a normal Word drawing**: drag it anywhere, resize with the corner
    handles, rotate with the rotation handle, or layer it over images and tables. Because it's
    a real Word object, it **persists in the .docx** — saving, reopening, printing, and
@@ -177,9 +179,8 @@ edit, duplicate, and delete the stamps this add-in created.
    opacity, rotation (or "Random tilt" for a hand-stamped look). Text-line sizes are set
    per block in the custom builder.
 5. **Preview** updates live as you type.
-6. **Position** — drop it at the cursor, or use a quick preset: top-left/top-center/top-right,
-   center-left/center/center-right, bottom-left/bottom-center/bottom-right.
-7. **INSERT STAMP**. The new stamp is selected so you can drag/fine-tune it immediately.
+6. **INSERT STAMP** — the stamp drops in at your cursor as a floating shape and is left
+   selected, so you can drag it anywhere and rotate it with Word's rotation handle.
 
 ### Stamps tab
 Lists every stamp this add-in created in the open document, with size, rotation, position,
