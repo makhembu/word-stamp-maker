@@ -677,6 +677,8 @@ function switchTab(name: string): void {
   $("tab-design").hidden = name !== "design";
   $("tab-manage").hidden = name !== "manage";
   $("tab-tests").hidden = name !== "tests";
+  $("previewBar").hidden = name !== "design";
+  $("actionBar").hidden = name !== "design";
   if (name === "manage") void refreshManage();
 }
 
@@ -749,6 +751,8 @@ function init(): void {
     $("tab-design").hidden = true;
     $("tab-manage").hidden = true;
     $("tab-tests").hidden = true;
+    $("previewBar").hidden = true;
+    $("actionBar").hidden = true;
     document.querySelectorAll<HTMLElement>("nav.tabs button").forEach((b) => (b.style.display = "none"));
     return;
   }
@@ -759,6 +763,8 @@ function init(): void {
   buildPosChips();
   bindEvents();
   refreshSavedDesigns();
+  $("previewBar").hidden = false;
+  $("actionBar").hidden = false;
   selectTemplate(TEMPLATES[0].id);
   void refreshManage();
 }

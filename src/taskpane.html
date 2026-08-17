@@ -140,12 +140,9 @@
     .range-row input[type="range"] { flex: 1; accent-color: var(--accent); }
     .range-row output { font-size: 12px; font-weight: 600; min-width: 34px; text-align: right; }
 
-    /* preview: pinned to the top of the scroll area so it stays visible while editing */
-    #previewSticky {
-      position: sticky;
-      top: 0;
-      z-index: 20;
-      margin: -12px -14px 0;
+    /* preview: fixed bar above the scroll area, so it is always visible and nothing
+       ever scrolls underneath it */
+    #previewBar {
       padding: 12px 14px 10px;
       background: var(--bg);
       border-bottom: 1px solid var(--line);
@@ -154,27 +151,24 @@
       background: repeating-linear-gradient(45deg, #f1f2f4 0 10px, #eceef1 10px 20px);
       border: 1px solid var(--line);
       border-radius: var(--radius);
-      padding: 14px 16px;
+      padding: 10px 14px;
       display: flex;
       align-items: center;
       justify-content: center;
-      min-height: 108px;
+      min-height: 96px;
       overflow: hidden;
     }
     #previewWrap canvas {
       max-width: 100%;
-      max-height: 116px;
+      max-height: 100px;
       width: auto;
       height: auto;
       filter: drop-shadow(0 2px 5px rgba(0,0,0,0.18));
     }
 
-    /* primary action bar: pinned to the bottom so INSERT STAMP is always reachable */
-    #actionSticky {
-      position: sticky;
-      bottom: 0;
-      z-index: 20;
-      margin: 12px -14px -20px;
+    /* primary action bar: fixed below the scroll area so INSERT STAMP is always
+       reachable without covering any controls */
+    #actionBar {
       padding: 12px 14px 14px;
       background: var(--bg);
       border-top: 1px solid var(--line);
@@ -309,7 +303,7 @@
     .test-result .tdetail { color: var(--muted); font-size: 11.5px; margin-top: 2px; }
 
     #toast {
-      position: fixed; left: 50%; bottom: 92px; transform: translateX(-50%);
+      position: fixed; left: 50%; bottom: 176px; transform: translateX(-50%);
       background: var(--ink); color: #fff; border-radius: 8px;
       padding: 9px 16px; font-size: 12.5px; box-shadow: 0 4px 14px rgba(0,0,0,0.25);
       z-index: 50; max-width: 90%;
@@ -340,6 +334,13 @@
       <button id="tabBtn-tests" data-tab="tests">Test</button>
     </nav>
 
+    <!-- Live preview: fixed bar, always visible while designing -->
+    <div id="previewBar" hidden>
+      <div id="previewWrap">
+        <canvas id="preview" width="200" height="120"></canvas>
+      </div>
+    </div>
+
     <main>
       <!-- Unsupported host -->
       <section id="unsupported" hidden>
@@ -354,11 +355,6 @@
 
       <!-- Design -->
       <section id="tab-design">
-        <div id="previewSticky">
-          <div id="previewWrap">
-            <canvas id="preview" width="200" height="120"></canvas>
-          </div>
-        </div>
         <div class="section-label">Choose a design</div>
         <div id="templateGrid"></div>
 
@@ -495,16 +491,6 @@
           <label for="rotationNum">Rotation (degrees)</label>
           <input type="number" id="rotationNum" min="-180" max="180" value="0" />
         </div>
-
-        <div id="actionSticky">
-          <div class="section-label" style="margin-top:0">Position</div>
-          <div id="posChips"></div>
-          <div id="editBanner" class="edit-banner" hidden>
-            <span id="editBannerText">Updating stamp…</span>
-            <button id="cancelEditBtn">Cancel</button>
-          </div>
-          <button id="insertBtn" class="primary-btn">INSERT STAMP</button>
-        </div>
       </section>
 
       <!-- Manage -->
@@ -533,6 +519,17 @@
         <div id="testResults"></div>
       </section>
     </main>
+
+    <!-- Primary action bar: fixed below the scroll area, so controls never scroll under it -->
+    <div id="actionBar" hidden>
+      <div class="section-label" style="margin-top:0">Position</div>
+      <div id="posChips"></div>
+      <div id="editBanner" class="edit-banner" hidden>
+        <span id="editBannerText">Updating stamp…</span>
+        <button id="cancelEditBtn">Cancel</button>
+      </div>
+      <button id="insertBtn" class="primary-btn">INSERT STAMP</button>
+    </div>
 
     <div id="toast" hidden></div>
   </div>
