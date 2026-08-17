@@ -430,6 +430,17 @@
             </div>
             <div id="savedDesigns"></div>
             <div id="savedDesignsEmpty" class="hint-empty" hidden>Build a stamp, give it a name, and press Save design to keep it here.</div>
+            <div class="row" style="margin-top:8px">
+              <button id="importDesignsBtn" type="button" class="ghost-btn btn-icon" style="flex:1">
+                <svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 12V4"/><path d="M5.5 6.5 8 4l2.5 2.5"/><path d="M2.5 13.5h11"/></svg>
+                Import
+              </button>
+              <button id="exportAllBtn" type="button" class="ghost-btn btn-icon" style="flex:1">
+                <svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 4v8"/><path d="M5.5 9.5 8 12l2.5-2.5"/><path d="M2.5 2.5h11"/></svg>
+                Export all
+              </button>
+            </div>
+            <input type="file" id="importFile" accept=".stamp,.json,application/json" multiple hidden />
           </div>
         </div>
 

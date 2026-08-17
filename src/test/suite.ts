@@ -12,6 +12,8 @@
 import { renderStamp } from "../core/renderer";
 import { deleteStamp, insertStamp, listStamps } from "../core/document";
 import { applyDynamicFields, defaultsFor, TEMPLATES, todayText } from "../core/templates";
+import { parseDesignFile, serializeDesigns } from "../core/saved";
+import type { SavedDesign } from "../core/saved";
 import type { StampParams } from "../core/types";
 
 export interface TestResult {
@@ -327,6 +329,67 @@ export async function runTestSuite(): Promise<TestResult[]> {
         return { pass: false, detail: "dynamicDate flag was not persisted" };
       }
       return { pass: true, detail: `Inserted RECEIVED stamp carries "${parsed.dateText}" and stays dynamic` };
+    })
+  );
+
+  results.push(
+    await runOne("Design export/import round-trips through the .stamp file", async () => {
+      const design: SavedDesign = {
+        id: "exp1",
+        name: "OCS",
+        savedAt: 123456,
+        params: testStampParams({
+          templateId: "custom",
+          shape: "rectangle",
+          mainText: "OCS",
+          inkColor: "#123456",
+          textBlocks: [
+            { id: "b0", text: "Officer Commanding Station (OCS)", size: 15, y: 24, align: "center" as const, bold: true, underline: true, spacing: 2 },
+            { id: "b1", text: "Madema Police Station", size: 13, y: 62, align: "center" as const, italic: true, autoDate: true },
+          ],
+        }),
+      };
+      const text = serializeDesigns([design]);
+      const parsed = parseDesignFile(text);
+      if (parsed.length !== 1) return { pass: false, detail: `Expected 1 design, got ${parsed.length}` };
+      if (parsed[0].name !== "OCS") return { pass: false, detail: `Name mismatch: "${parsed[0].name}"` };
+      if (JSON.stringify(parsed[0].params) !== JSON.stringify(design.params)) {
+        return { pass: false, detail: "Params did not survive the file round-trip" };
+      }
+      return { pass: true, detail: `"${parsed[0].name}" exported and imported identically (${text.length} bytes)` };
+    })
+  );
+
+  results.push(
+    await runOne("Design import accepts single/array files and rejects garbage", async () => {
+      const single = parseDesignFile(
+        JSON.stringify({ id: "s1", name: "Single", params: defaultsFor(TEMPLATES.find((t) => t.id === "approved")!) })
+      );
+      if (single.length !== 1 || single[0].name !== "Single") {
+        return { pass: false, detail: "Single-object file did not import" };
+      }
+      const arr = parseDesignFile(
+        JSON.stringify([
+          { name: "A", params: defaultsFor(TEMPLATES.find((t) => t.id === "paid")!) },
+          { name: "B", params: defaultsFor(TEMPLATES.find((t) => t.id === "received")!) },
+        ])
+      );
+      if (arr.length !== 2) return { pass: false, detail: `Array file: expected 2, got ${arr.length}` };
+      let threwGarbage = false;
+      try {
+        parseDesignFile("{not json");
+      } catch {
+        threwGarbage = true;
+      }
+      if (!threwGarbage) return { pass: false, detail: "Garbage file did not throw" };
+      let threwEmpty = false;
+      try {
+        parseDesignFile(JSON.stringify({ foo: "bar" }));
+      } catch {
+        threwEmpty = true;
+      }
+      if (!threwEmpty) return { pass: false, detail: "File with no valid designs did not throw" };
+      return { pass: true, detail: "Single + array formats accepted; garbage and empty files rejected" };
     })
   );
 

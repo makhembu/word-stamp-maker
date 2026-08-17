@@ -52,3 +52,73 @@ export function saveDesign(name: string, params: StampParams): SavedDesign[] {
 export function deleteSavedDesign(id: string): SavedDesign[] {
   return persist(loadSavedDesigns().filter((d) => d.id !== id));
 }
+
+// ---------- Export / import (share designs across machines) ----------
+
+const DESIGN_FILE_FORMAT = "stamp-maker-design";
+const MAX_NAME_LEN = 32;
+
+/** The on-disk shape of an exported design file (.stamp = JSON). */
+interface DesignFile {
+  format: string;
+  version: number;
+  exportedAt?: string;
+  designs: SavedDesign[];
+}
+
+/** Serialize designs to the shareable .stamp JSON text. */
+export function serializeDesigns(designs: SavedDesign[]): string {
+  const payload: DesignFile = {
+    format: DESIGN_FILE_FORMAT,
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    designs,
+  };
+  return JSON.stringify(payload, null, 2);
+}
+
+/**
+ * Parse a design file into SavedDesigns. Accepts the .stamp bundle format, a plain
+ * array of designs, or a single design object. Invalid entries are skipped; throws
+ * when nothing usable is found.
+ */
+export function parseDesignFile(text: string): SavedDesign[] {
+  let data: unknown;
+  try {
+    data = JSON.parse(text);
+  } catch {
+    throw new Error("Not a valid design file (expected JSON).");
+  }
+
+  const candidates: unknown[] = [];
+  if (data && typeof data === "object" && Array.isArray((data as DesignFile).designs)) {
+    candidates.push(...(data as DesignFile).designs);
+  } else if (Array.isArray(data)) {
+    candidates.push(...data);
+  } else {
+    candidates.push(data);
+  }
+
+  const designs: SavedDesign[] = [];
+  for (const c of candidates) {
+    const raw = c as Partial<SavedDesign>;
+    const p = raw?.params as StampParams | undefined;
+    if (!p || typeof p !== "object" || typeof p.shape !== "string") continue;
+    const name = typeof raw.name === "string" && raw.name.trim() ? raw.name.trim().slice(0, MAX_NAME_LEN) : "Imported design";
+    designs.push({
+      id: typeof raw.id === "string" && raw.id ? raw.id : Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+      name,
+      params: JSON.parse(JSON.stringify(p)) as StampParams,
+      savedAt: typeof raw.savedAt === "number" ? raw.savedAt : Date.now(),
+    });
+  }
+  if (!designs.length) throw new Error("No valid stamp designs found in that file.");
+  return designs;
+}
+
+/** Merge parsed designs into storage (a design with the same name replaces the old
+ *  one, matching saveDesign semantics). Returns how many designs were merged. */
+export function importDesigns(designs: SavedDesign[]): number {
+  for (const d of designs) saveDesign(d.name, d.params);
+  return designs.length;
+}

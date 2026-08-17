@@ -19,7 +19,14 @@ import {
   listStamps,
   selectStamp,
 } from "./core/document";
-import { deleteSavedDesign, loadSavedDesigns, saveDesign } from "./core/saved";
+import {
+  deleteSavedDesign,
+  importDesigns,
+  loadSavedDesigns,
+  parseDesignFile,
+  saveDesign,
+  serializeDesigns,
+} from "./core/saved";
 import type { SavedDesign } from "./core/saved";
 import type { StampParams, StampRecord, TextAlign, TextBlock } from "./core/types";
 import { runTestSuite } from "./test/suite";
@@ -38,6 +45,7 @@ function val(id: string): string {
 const ICONS = {
   x: '<svg viewBox="0 0 16 16" width="11" height="11" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg>',
   check: '<svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8.5l3.5 3.5L13 4.5"/></svg>',
+  export: '<svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 4v8"/><path d="M5.5 9.5 8 12l2.5-2.5"/><path d="M2.5 2.5h11"/></svg>',
 };
 
 
@@ -353,6 +361,19 @@ function refreshSavedDesigns(): void {
     const name = document.createElement("span");
     name.textContent = d.name;
     name.style.fontWeight = "600";
+    const actions = document.createElement("span");
+    actions.style.marginLeft = "auto";
+    actions.style.display = "inline-flex";
+    actions.style.gap = "4px";
+    const exp = document.createElement("button");
+    exp.type = "button";
+    exp.className = "del";
+    exp.title = "Export this design to a file";
+    exp.innerHTML = ICONS.export;
+    exp.addEventListener("click", (e) => {
+      e.stopPropagation();
+      exportOne(d);
+    });
     const del = document.createElement("button");
     del.type = "button";
     del.className = "del";
@@ -365,11 +386,85 @@ function refreshSavedDesigns(): void {
       buildTemplateGrid();
       toast("Design deleted");
     });
+    actions.appendChild(exp);
+    actions.appendChild(del);
     chip.appendChild(name);
-    chip.appendChild(del);
+    chip.appendChild(actions);
     chip.addEventListener("click", () => loadSavedIntoUI(d));
     wrap.appendChild(chip);
   }
+}
+
+// ---------- Export / import ----------
+function downloadTextFile(filename: string, text: string): void {
+  const blob = new Blob([text], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  window.setTimeout(() => URL.revokeObjectURL(url), 2000);
+}
+
+function sanitizeFilename(name: string): string {
+  return (name.trim().replace(/[^a-z0-9-_ ]/gi, "_").replace(/\s+/g, "_") || "design");
+}
+
+function exportDesigns(designs: SavedDesign[], filename: string): void {
+  if (!designs.length) {
+    toast("Nothing to export yet: save a design first", true);
+    return;
+  }
+  downloadTextFile(filename, serializeDesigns(designs));
+  toast(`Exported ${designs.length} design${designs.length === 1 ? "" : "s"}`);
+}
+
+function exportOne(d: SavedDesign): void {
+  exportDesigns([d], `${sanitizeFilename(d.name)}.stamp`);
+}
+
+function exportAll(): void {
+  const designs = loadSavedDesigns();
+  exportDesigns(designs, "stamp-maker-designs.stamp");
+}
+
+function importFromFiles(files: FileList | null): void {
+  if (!files || !files.length) return;
+  const fileList = Array.from(files);
+  let total = 0;
+  let imported = 0;
+  const processNext = (): void => {
+    if (!fileList.length) {
+      if (imported === 0) {
+        toast(`Nothing imported: ${total} file${total === 1 ? "" : "s"} had no valid designs`, true);
+      } else {
+        toast(`Imported ${imported} design${imported === 1 ? "" : "s"}`);
+      }
+      refreshSavedDesigns();
+      buildTemplateGrid();
+      return;
+    }
+    const file = fileList.shift()!;
+    const reader = new FileReader();
+    reader.onload = () => {
+      total++;
+      try {
+        imported += importDesigns(parseDesignFile(String(reader.result)));
+      } catch (e) {
+        toast(`Could not import "${file.name}": ${errorMessage(e)}`, true);
+      }
+      processNext();
+    };
+    reader.onerror = () => {
+      total++;
+      toast(`Could not read "${file.name}"`, true);
+      processNext();
+    };
+    reader.readAsText(file);
+  };
+  processNext();
 }
 
 function loadSavedIntoUI(d: SavedDesign): void {
@@ -793,6 +888,15 @@ function bindEvents(): void {
   });
   $("designName").addEventListener("keydown", (e) => {
     if (e.key === "Enter") ($("saveDesignBtn") as HTMLButtonElement).click();
+  });
+  $("importDesignsBtn").addEventListener("click", () => {
+    ($("importFile") as HTMLInputElement).click();
+  });
+  $("exportAllBtn").addEventListener("click", exportAll);
+  $("importFile").addEventListener("change", (e) => {
+    const input = e.target as HTMLInputElement;
+    importFromFiles(input.files);
+    input.value = ""; // allow picking the same file again
   });
   $("insertBtn").addEventListener("click", () => void applyStamp());
   $("cancelEditBtn").addEventListener("click", cancelEdit);

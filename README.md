@@ -192,8 +192,13 @@ edit, duplicate, and delete the stamps this add-in created.
    - tick **Today** on any line to make it an auto date: it re-fills with the current
      date whenever the stamp is inserted or duplicated;
    - tick **"Wavy divider line"** to separate lines, and save the whole design with
-     **💾 Save design** — saved designs appear in the gallery (dashed chips) and in the
-     custom section, ready to load, edit, and delete anytime (stored on this machine).
+     **Save design** — saved designs appear in the gallery (dashed chips) and in the
+     custom section, ready to load, edit, and delete anytime (stored on this machine);
+   - **share designs with the whole office**: **Export all** (or the export icon on a
+     single saved design) downloads a small `.stamp` file, and **Import** loads one or
+     more of those files — anyone else gets the exact same stamp, e.g. the OCS stamp
+     built once and imported on every station machine (designs with the same name are
+     updated, not duplicated);
 4. **Style** — ink color (presets + custom picker), size (Small/Medium/Large/custom width),
    font, bold/italic/underline, alignment, border style (single/double), border thickness,
    opacity, rotation (or "Random tilt" for a hand-stamped look). Text-line sizes are set
@@ -241,14 +246,16 @@ move*:
 3. ✅ Stamp on a long multi-page document (300 paragraphs) → no reflow.
 4. ✅ Rotation is applied to the floating shape.
 5. ✅ Metadata round-trips (stamps are editable later).
-6. ✅ Dynamic date re-fills with today's date.
-7. ✅ Manual date is preserved when dynamic is off.
-8. ✅ Custom auto-date block re-fills; other blocks untouched.
-9. ✅ Dynamic-date stamp round-trips through Word carrying today's date.
-10. ✅ Edit-in-place preserves position, stamp count, and updates text.
-11. ✅ Duplicate creates an offset copy.
-12. ✅ Delete removes only the targeted stamp.
-13. ✅ Quick-position preset lands inside the page.
+6. ✅ Design export/import round-trips through the .stamp file.
+7. ✅ Design import accepts single/array files and rejects garbage.
+8. ✅ Dynamic date re-fills with today's date.
+9. ✅ Manual date is preserved when dynamic is off.
+10. ✅ Custom auto-date block re-fills; other blocks untouched.
+11. ✅ Dynamic-date stamp round-trips through Word carrying today's date.
+12. ✅ Edit-in-place preserves position, stamp count, and updates text.
+13. ✅ Duplicate creates an offset copy.
+14. ✅ Delete removes only the targeted stamp.
+15. ✅ Quick-position preset lands inside the page.
 
 Manual checklist (do these once in Word):
 
