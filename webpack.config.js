@@ -106,6 +106,28 @@ module.exports = async (env, argv) => {
           });
         },
       },
+      // Emit dist/robots.txt pointing crawlers at the sitemap (GitHub Pages serves
+      // no robots.txt by default, so Google needs this hint to find the sitemap).
+      {
+        apply(compiler) {
+          compiler.hooks.emit.tapAsync("StampMakerRobots", (compilation, callback) => {
+            try {
+              const robots =
+                `User-agent: *\n` +
+                `Allow: /\n` +
+                `\n` +
+                `Sitemap: ${BASE_URL}/sitemap.xml\n`;
+              compilation.assets["robots.txt"] = {
+                source: () => robots,
+                size: () => Buffer.byteLength(robots),
+              };
+            } catch (err) {
+              compilation.errors.push(new Error(`Failed to emit robots.txt: ${err.message}`));
+            }
+            callback();
+          });
+        },
+      },
     ],
     devServer: {
       host: HOST,
