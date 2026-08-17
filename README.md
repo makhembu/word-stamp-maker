@@ -110,7 +110,21 @@ That same workflow rebuilds and redeploys on every future push.
    netlify.com), Cloudflare Pages, Vercel, Azure Static Web Apps, your own server.
 3. Share `https://your.host/path/manifest.xml` with users.
 
-#### Installing the shared manifest
+#### Installing for end users (one click, no XML)
+
+The Pages build also generates **`stamp-maker-setup.zip`** (`scripts/make-installer.mjs`
+after `npm run build`), a download-only zip for regular users:
+
+* **`install-windows.bat`** — registers the add-in in the Windows registry
+  (`HKCU\Software\Microsoft\Office\Word\Addins\StampMaker`, `Manifest` = hosted URL,
+  `LoadBehavior` = 3), so it appears in Word automatically.
+* **`install-mac.command`** — copies the manifest into Word's wef folder
+  (`~/Library/Containers/com.microsoft.Word/Data/Documents/wef`) so it shows under
+  *Home → Add-ins*.
+* **`README-SETUP.txt`** — plain-language guide with troubleshooting and uninstall steps.
+* **`manifest.xml`** — kept in the zip only as a manual fallback.
+
+Manual fallback (no installer):
 
 * **Windows Word desktop:** *Insert → Add-ins → My Add-ins → Upload My Add-in* → pick
   the manifest file.

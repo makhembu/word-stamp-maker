@@ -13,6 +13,7 @@
     "certs": "office-addin-dev-certs install",
     "icons": "node scripts/gen-icons.mjs",
     "smoke": "npx tsc src/core/renderer.ts src/core/templates.ts src/core/types.ts --outDir .smoke --module commonjs --target es2019 --skipLibCheck --esModuleInterop && node scripts/smoke-render.mjs",
+    "make-installer": "node scripts/make-installer.mjs",
     "gallery": "npx tsc src/core/renderer.ts src/core/templates.ts src/core/types.ts --outDir .smoke --module commonjs --target es2019 --skipLibCheck --esModuleInterop && node scripts/gen-gallery.mjs",
     "check-pane": "npm exec --yes --package=playwright -- node scripts/check-pane.mjs",
     "check-landing": "npm exec --yes --package=playwright -- node scripts/check-landing.mjs"

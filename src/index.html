@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Stamp Maker: Rubber Stamps for Microsoft Word, Without Moving a Line</title>
+  <title>Stamp Maker for Word — Rubber Stamps as a Microsoft Word Add-in</title>
   <meta name="description" content="Stamp Maker is a free Microsoft Word add-in for creating and inserting professional rubber stamps: APPROVED, CONFIDENTIAL, RECEIVED, PAID, official seals, date stamps, signature stamps and custom designs. Stamps are real floating shapes that overlay your document without moving or reflowing a single line of text." />
   <meta name="keywords" content="word stamp add-in, rubber stamp word, approved stamp word, confidential stamp word, document stamp plugin, official seal word, word task pane add-in, insert stamp without moving text, custom stamp builder, multi-line stamp word, received stamp, paid stamp" />
   <meta name="author" content="Stamp Maker" />
@@ -269,27 +269,29 @@
       <a href="#why">Why</a>
       <a href="#designs">Designs</a>
       <a href="#install">Install</a>
-      <a class="nav-cta" href="manifest.xml" download="stamp-maker-manifest.xml">Download</a>
+      <a class="nav-cta" href="stamp-maker-setup.zip" download>Download installer</a>
     </div>
   </nav>
 
   <header class="hero" id="top">
     <div class="hero-copy">
-      <span class="kicker">A free Microsoft Word add-in</span>
-      <h1>Stamp it.<br /><span class="red">Without moving a line.</span></h1>
+      <span class="kicker">A Microsoft Word add-in</span>
+      <h1>Rubber stamps,<br /><span class="red">inside Microsoft Word.</span></h1>
       <p class="lede">
-        Design <strong>APPROVED</strong>, <strong>CONFIDENTIAL</strong>, official seals, date and
-        signature stamps. Then press them onto your document as real floating shapes that sit
-        <strong>on top of your text</strong>, exactly where you put them.
+        Stamp Maker installs <strong>inside Word</strong> (Word desktop on Windows and Mac) and adds
+        a <strong>Design Stamp</strong> button to the Home tab. Pick a design — APPROVED,
+        CONFIDENTIAL, official seals, date stamps, or your own custom stamp — type your text, and
+        press it onto the page. The stamp floats <strong>on top of your text</strong>: nothing
+        moves, nothing reflows.
       </p>
       <div class="hero-actions">
-        <a class="btn primary" href="manifest.xml" download="stamp-maker-manifest.xml">
+        <a class="btn primary" href="stamp-maker-setup.zip" download>
           <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 2.5h9.5L14 5v8.5H2.5z"/><path d="M5.5 2.5v4h5v-4M5 13.5v-4.5h6v4.5"/></svg>
-          Download the add-in
+          Download installer
         </a>
         <a class="btn ghost" href="#designs">See the designs</a>
       </div>
-      <p class="hero-note">Free forever · no account · no ads · works offline in Word</p>
+      <p class="hero-note">Free forever · no account · installs in under a minute · Windows &amp; Mac</p>
     </div>
     <div class="hero-stamps" aria-hidden="true">
       <img class="stamp s1" src="assets/gallery/approved.png" alt="" />
@@ -352,15 +354,16 @@
         <h2>Installed in under a minute</h2>
       </div>
       <ol class="steps">
-        <li class="reveal"><strong>Download the manifest file</strong>: <a href="manifest.xml" download="stamp-maker-manifest.xml">stamp-maker-manifest.xml</a> (right-click, then Save link as…).</li>
-        <li class="reveal">In Word (Windows), go to <strong>Insert → Add-ins → My Add-ins → Upload My Add-in</strong>.</li>
-        <li class="reveal">Select the downloaded file and click <strong>Open</strong>. A <strong>Stamp Maker</strong> group appears on the Home tab: click <strong>Design Stamp</strong>.</li>
+        <li class="reveal"><strong>Download the installer</strong>: <a href="stamp-maker-setup.zip" download>stamp-maker-setup.zip</a> — a small zip with everything you need.</li>
+        <li class="reveal">Unzip it and double-click <strong>Install Stamp Maker</strong> (<code>install-windows.bat</code> on Windows, <code>install-mac.command</code> on Mac), then press Enter. That's the whole install — no files to move, no XML to touch.</li>
+        <li class="reveal"><strong>Open Word</strong> and you'll see a <strong>Stamp Maker</strong> group on the <strong>Home tab</strong>: click <strong>Design Stamp</strong> and start stamping.</li>
       </ol>
       <div class="note reveal">
-        <strong>Requirements:</strong> Microsoft Word <strong>desktop</strong> (Microsoft 365) on Windows or Mac.
-        Not available in Word for the web, Word 2013/2016/2019, or iPad. The add-in shows a clear message there.
-        On Mac there is no "Upload My Add-in" button: copy the manifest into
-        <code>~/Library/Containers/com.microsoft.Word/Data/Documents/wef</code>, then restart Word.
+        <strong>Prefer to install by hand?</strong> Windows: Word → Insert → Add-ins → My Add-ins →
+        Upload My Add-in → choose <a href="manifest.xml" download="stamp-maker-manifest.xml">manifest.xml</a>.
+        Mac: copy that file into <code>~/Library/Containers/com.microsoft.Word/Data/Documents/wef</code>.
+        <strong>Requirements:</strong> Word <strong>desktop</strong> (Microsoft 365) on Windows or Mac — not
+        Word for the web, Word 2013/2016/2019, or iPad.
       </div>
     </div>
   </section>
@@ -374,7 +377,7 @@
         admin center (Settings → Integrated apps). Upload the same manifest, assign it to your
         users, and everyone gets the same stamps.
       </p>
-      <a class="btn ghost" href="manifest.xml" download="stamp-maker-manifest.xml">Download the manifest</a>
+      <a class="btn ghost" href="manifest.xml" download="stamp-maker-manifest.xml">Get the manifest (for admins)</a>
     </div>
   </section>
 

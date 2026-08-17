@@ -50,6 +50,27 @@ ok(figures.broken === 0, `all gallery images loaded (${figures.broken} broken)`)
 ok(figures.labels.every(Boolean), "every tile has a caption");
 ok(errors.length === 0, `no console/page errors (${errors.length ? errors[0] : "clean"})`);
 
+// The page must make it obvious this is a Microsoft Word add-in and lead with
+// the one-click installer, not the raw XML manifest.
+const copy = await page.evaluate(() => document.body.innerText);
+ok(
+  copy.includes("Microsoft Word"),
+  'page text mentions "Microsoft Word"'
+);
+ok(
+  /Word add-in/i.test(copy),
+  'page text says it is a "Word add-in"'
+);
+const dl = await page.evaluate(() => {
+  const a = document.querySelector('a.btn.primary[href="stamp-maker-setup.zip"]');
+  if (!a) return null;
+  return { href: a.getAttribute("href"), download: a.hasAttribute("download"), text: a.textContent.trim() };
+});
+ok(!!dl, "hero primary CTA links to stamp-maker-setup.zip");
+ok(dl?.download, "download CTA uses the download attribute");
+ok(/installer/i.test(dl?.text || ""), "download CTA says installer");
+ok(/installer/i.test(copy), "install steps mention the installer");
+
 await page.screenshot({ path: "landing.png", fullPage: true });
 await browser.close();
 console.log(failures ? `\n${failures} failure(s)` : "\nAll landing-page checks passed.");

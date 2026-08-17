@@ -43,6 +43,16 @@ jobs:
         env:
           BUILD_URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}
 
+      - name: Build one-click installer + download zip
+        # Generates setup/install-windows.bat, setup/install-mac.command, README
+        # with the live URL baked in, then ships it all as stamp-maker-setup.zip
+        # so users download a zip (no raw XML handling).
+        run: |
+          node scripts/make-installer.mjs
+          cd dist
+          chmod +x setup/install-mac.command
+          zip -r stamp-maker-setup.zip setup
+
       - name: Configure Pages
         uses: actions/configure-pages@v5
 
