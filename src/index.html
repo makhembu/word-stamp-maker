@@ -29,6 +29,30 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Anton&family=Barlow:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <!-- Site analytics (GA4). The ANALYTICS block is baked at build time: when
+       GA_MEASUREMENT_ID is set, the placeholder inside is replaced with the real
+       id; otherwise the whole block is stripped so no tracking ships. Tracks
+       pageviews and downloads of the installer zip / manifest (a[download] clicks). -->
+  <!-- ANALYTICS_START -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=__GA_ID__"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag("js", new Date());
+    gtag("config", "__GA_ID__");
+    window.addEventListener("load", function () {
+      document.querySelectorAll("a[download]").forEach(function (a) {
+        a.addEventListener("click", function () {
+          gtag("event", "download", {
+            event_category: "file",
+            event_label: a.getAttribute("href") || "",
+            file_name: a.getAttribute("download") || a.getAttribute("href") || "",
+          });
+        });
+      });
+    });
+  </script>
+  <!-- ANALYTICS_END -->
   <!-- Structured data for search engines -->
   <script type="application/ld+json">
   {
@@ -432,7 +456,7 @@
         </details>
         <details class="faq-item reveal">
           <summary>Is it really free? Do you collect my data?<svg class="faq-chev" viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M8 3v10M3 8h10"/></svg></summary>
-          <p>Free, with no account, no ads, and no tracking. Stamps are designed and rendered <strong>on your own computer</strong> and inserted into your document as ordinary Word pictures — your document never leaves your machine. The add-in itself is loaded from the web the way normal Word add-ins are, so Word needs internet to fetch it when it opens; after that, everything runs locally and the stamps are saved inside your .docx file.</p>
+          <p>Free, with no account and no ads. The <strong>add-in itself does no tracking</strong>: stamps are designed and rendered <strong>on your own computer</strong> and inserted into your document as ordinary Word pictures — your document never leaves your machine. This website uses basic Google Analytics to count visits and installer downloads, so we can tell the tool is being used; it never touches your documents. The add-in is loaded from the web the way normal Word add-ins are, so Word needs internet to fetch it when it opens; after that, everything runs locally and the stamps are saved inside your .docx file.</p>
         </details>
         <details class="faq-item reveal">
           <summary>Will inserting a stamp mess up my document?<svg class="faq-chev" viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M8 3v10M3 8h10"/></svg></summary>

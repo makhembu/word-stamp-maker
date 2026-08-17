@@ -90,6 +90,19 @@ BUILD_URL=https://yourname.github.io/stamp-maker npm run build
 
 If `BUILD_URL` is omitted, the build warns and keeps the localhost URLs (dev-only).
 
+**Site analytics (GA4, optional):** the landing page ships a Google Analytics block only
+when a measurement id is provided at build time:
+
+```bash
+GA_MEASUREMENT_ID=G-XXXXXXXXXX BUILD_URL=... npm run build
+```
+
+Without `GA_MEASUREMENT_ID` the block is stripped entirely — dev builds ship zero
+tracking. With it, pageviews are tracked and every download click (any `a[download]`
+link: the installer zip and the manifest) fires a `download` event with the file name,
+visible in GA4 → Reports → Engagement → Events. The Pages workflow reads the id from
+the repo variable `GA_MEASUREMENT_ID` (`gh variable set GA_MEASUREMENT_ID -R <repo> --body G-XXX`).
+
 #### Option A — GitHub repo + GitHub Pages (recommended: hosting *and* discoverability)
 
 The repo already ships with a Pages workflow (`.github/workflows/pages.yml`):

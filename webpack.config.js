@@ -129,14 +129,22 @@ module.exports = async (env, argv) => {
         },
       },
       // Rewrite __BASE_URL__ placeholders in the copied landing page so the canonical
-      // URL, og:url, og:image, and JSON-LD all point at the real deployed origin.
+      // URL, og:url, og:image, and JSON-LD all point at the real deployed origin. Also
+      // bakes the GA4 measurement id into the analytics block — or strips the block
+      // entirely when no id is configured, so dev builds ship zero tracking.
       {
         apply(compiler) {
           compiler.hooks.emit.tapAsync("StampMakerIndexRewrite", (compilation, callback) => {
             try {
               const asset = compilation.assets["index.html"];
               if (asset) {
-                const out = asset.source().toString().split("__BASE_URL__").join(BASE_URL);
+                let out = asset.source().toString().split("__BASE_URL__").join(BASE_URL);
+                const gaId = (process.env.GA_MEASUREMENT_ID || "").trim();
+                if (gaId) {
+                  out = out.split("__GA_ID__").join(gaId);
+                } else {
+                  out = out.replace(/<!-- ANALYTICS_START -->[\s\S]*?<!-- ANALYTICS_END -->\n?/g, "");
+                }
                 compilation.assets["index.html"] = {
                   source: () => out,
                   size: () => Buffer.byteLength(out),

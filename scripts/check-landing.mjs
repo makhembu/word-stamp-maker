@@ -93,6 +93,7 @@ ok(/(tracking|account|never leaves your machine|collect my data)/i.test(faq.text
 const seo = await page.evaluate(() => {
   const q = (sel, attr) => document.querySelector(sel)?.getAttribute(attr) || "";
   const ld = JSON.parse(document.querySelector('script[type="application/ld+json"]')?.textContent || "{}");
+  const gtag = document.querySelector('script[src*="googletagmanager"]');
   return {
     canon: q('link[rel="canonical"]', "href"),
     ogUrl: q('meta[property="og:url"]', "content"),
@@ -101,9 +102,17 @@ const seo = await page.evaluate(() => {
     twImage: q('meta[name="twitter:image"]', "content"),
     twCard: q('meta[name="twitter:card"]', "content"),
     keywords: !!document.querySelector('meta[name="keywords"]'),
+    html: document.head.innerHTML,
+    gtagSrc: gtag?.getAttribute("src") || "",
     ld,
   };
 });
+ok(!/__GA_ID__/.test(seo.html), "no GA placeholder leaks into the page");
+if (seo.gtagSrc) {
+  ok(/^https:\/\/www\.googletagmanager\.com\/gtag\/js\?id=G-[A-Z0-9]+$/.test(seo.gtagSrc), `gtag script uses a valid G- id (${seo.gtagSrc})`);
+} else {
+  ok(true, "analytics not configured on this build (GA_MEASUREMENT_ID unset) — no gtag script");
+}
 ok(/^https:\/\//.test(seo.canon) && seo.canon.endsWith("/"), `canonical is absolute (${seo.canon})`);
 ok(/^https:\/\//.test(seo.ogUrl), `og:url is absolute (${seo.ogUrl})`);
 ok(/^https:\/\/.+social-card\.png$/.test(seo.ogImage), `og:image points at social-card.png (${seo.ogImage})`);
