@@ -6,6 +6,7 @@ import {
   INK_COLORS,
   SIZE_PRESETS,
   TEMPLATES,
+  applyDynamicFields,
   aspectForShape,
   defaultsFor,
   todayText,
@@ -155,8 +156,11 @@ function selectTemplate(id: string): void {
   ($("refText") as HTMLInputElement).value = "";
   ($("deptText") as HTMLInputElement).value = "";
   ($("nameText") as HTMLInputElement).value = "";
-  ($("addDate") as HTMLInputElement).checked = tpl.id === "date";
+  // RECEIVED and DATE carry a date by default; other templates opt in.
+  ($("addDate") as HTMLInputElement).checked = tpl.id === "date" || tpl.id === "received";
+  ($("dynamicDateChk") as HTMLInputElement).checked = !!d.dynamicDate;
   ($("dateText") as HTMLInputElement).value = todayText();
+  syncDateControls();
   selectSwatch(d.inkColor);
   ($("customColor") as HTMLInputElement).value = d.inkColor;
   ($("sizePreset") as HTMLSelectElement).value = "medium";
@@ -181,6 +185,25 @@ function selectTemplate(id: string): void {
 
   applyFieldVisibility(tpl);
   schedulePreview();
+}
+
+/** Keep the date controls consistent: "Today's date" only applies when a date is added,
+ *  and when it is on, the date text is read-only and shows today (it gets re-filled at
+ *  insert time anyway). */
+function syncDateControls(): void {
+  const addDate = ($("addDate") as HTMLInputElement).checked;
+  const dynamic = ($("dynamicDateChk") as HTMLInputElement).checked;
+  const dynamicChk = $("dynamicDateChk") as HTMLInputElement;
+  const dt = $("dateText") as HTMLInputElement;
+  dynamicChk.disabled = !addDate;
+  if (addDate && dynamic) {
+    dt.value = todayText();
+    dt.disabled = true;
+    dt.title = "Auto-filled with today's date when the stamp is inserted.";
+  } else {
+    dt.disabled = false;
+    dt.title = "";
+  }
 }
 
 function applyFieldVisibility(tpl: { supportsSecondLine: boolean; supportsDate: boolean; supportsRef: boolean; supportsDept: boolean; supportsName: boolean; id: string }): void {
@@ -218,12 +241,14 @@ function addBlockRow(block?: Partial<TextBlock>): void {
   const italic = block?.italic ?? false;
   const underline = block?.underline ?? false;
   const spacing = block?.spacing ?? 0;
+  const autoDate = block?.autoDate ?? false;
   row.innerHTML = `
     <div class="row">
-      <input type="text" class="block-text" maxlength="48" placeholder="Text…" value="${escapeAttr(block?.text ?? "")}" />
+      <input type="text" class="block-text" maxlength="48" placeholder="Text…" value="${autoDate ? todayText() : escapeAttr(block?.text ?? "")}" ${autoDate ? "disabled" : ""} />
       <label class="check mini" title="Bold"><input type="checkbox" class="block-bold" ${bold ? "checked" : ""} /> B</label>
       <label class="check mini" title="Italic"><input type="checkbox" class="block-italic" ${italic ? "checked" : ""} /> I</label>
       <label class="check mini" title="Underline"><input type="checkbox" class="block-underline" ${underline ? "checked" : ""} /> U</label>
+      <label class="check mini" title="Always use today's date"><input type="checkbox" class="block-autodate" ${autoDate ? "checked" : ""} /> Today</label>
       <button type="button" class="block-del" title="Remove this text">${ICONS.x}</button>
     </div>
     <div class="row block-opts">
@@ -246,12 +271,23 @@ function addBlockRow(block?: Partial<TextBlock>): void {
         <option value="right"${align === "right" ? " selected" : ""}>Right</option>
       </select>
     </div>`;
-  row.querySelector(".block-text")!.addEventListener("input", schedulePreview);
+  const blockText = row.querySelector(".block-text") as HTMLInputElement;
+  blockText.addEventListener("input", schedulePreview);
   row.querySelector(".block-size")!.addEventListener("input", schedulePreview);
   row.querySelector(".block-spacing")!.addEventListener("input", schedulePreview);
   for (const cls of [".block-bold", ".block-italic", ".block-underline"]) {
     row.querySelector(cls)!.addEventListener("change", schedulePreview);
   }
+  const blockAuto = row.querySelector(".block-autodate") as HTMLInputElement;
+  blockAuto.addEventListener("change", () => {
+    if (blockAuto.checked) {
+      blockText.value = todayText();
+      blockText.disabled = true;
+    } else {
+      blockText.disabled = false;
+    }
+    schedulePreview();
+  });
   const yRange = row.querySelector(".block-y") as HTMLInputElement;
   const yVal = row.querySelector(".yval") as HTMLElement;
   yRange.addEventListener("input", () => {
@@ -285,11 +321,13 @@ function blocksFromUI(): TextBlock[] {
   const out: TextBlock[] = [];
   const rows = Array.from($("textBlocksList").querySelectorAll<HTMLElement>(".block-row"));
   for (const row of rows) {
-    const text = (row.querySelector(".block-text") as HTMLInputElement).value.trim();
+    const autoDate = (row.querySelector(".block-autodate") as HTMLInputElement).checked;
+    const text = autoDate ? todayText() : (row.querySelector(".block-text") as HTMLInputElement).value.trim();
     if (!text) continue;
     out.push({
       id: "b" + out.length,
       text,
+      autoDate,
       size: Math.min(96, Math.max(6, parseInt((row.querySelector(".block-size") as HTMLInputElement).value, 10) || 18)),
       y: Math.min(96, Math.max(0, parseInt((row.querySelector(".block-y") as HTMLInputElement).value, 10) || 40)),
       align: (row.querySelector(".block-align") as HTMLSelectElement).value as TextAlign,
@@ -357,6 +395,7 @@ function widthFromSizePreset(): number {
 function paramsFromUI(): StampParams {
   const shape = val("shapeSelect") as StampParams["shape"];
   const addDate = ($("addDate") as HTMLInputElement).checked;
+  const dynamicDate = addDate && ($("dynamicDateChk") as HTMLInputElement).checked;
   const isCustom = activeTemplateId === "custom";
   const blocks = isCustom ? blocksFromUI() : [];
   const mainText = isCustom ? (blocks[0]?.text ?? "STAMP") : val("mainText").trim() || "STAMP";
@@ -366,6 +405,7 @@ function paramsFromUI(): StampParams {
     mainText,
     secondLine: isCustom ? "" : val("secondLine").trim(),
     dateText: addDate ? val("dateText").trim() || todayText() : "",
+    dynamicDate,
     refText: val("refText").trim(),
     deptText: val("deptText").trim(),
     nameText: val("nameText").trim(),
@@ -452,7 +492,7 @@ function updateEditBanner(): void {
 }
 
 async function applyStamp(): Promise<void> {
-  const params = paramsFromUI();
+  const params = applyDynamicFields(paramsFromUI());
   if (!params.mainText.trim()) {
     toast("Enter some stamp text first", true);
     return;
@@ -563,7 +603,9 @@ function loadParamsIntoUI(p: StampParams): void {
   ($("mainText") as HTMLInputElement).value = p.mainText;
   ($("secondLine") as HTMLInputElement).value = p.secondLine;
   ($("addDate") as HTMLInputElement).checked = !!p.dateText;
+  ($("dynamicDateChk") as HTMLInputElement).checked = !!p.dynamicDate;
   ($("dateText") as HTMLInputElement).value = p.dateText || todayText();
+  syncDateControls();
   ($("refText") as HTMLInputElement).value = p.refText;
   ($("deptText") as HTMLInputElement).value = p.deptText;
   ($("nameText") as HTMLInputElement).value = p.nameText;
@@ -606,6 +648,7 @@ function loadParamsIntoUI(p: StampParams): void {
       italic: b.italic ?? p.italic,
       underline: b.underline ?? p.underline,
       spacing: b.spacing ?? 0,
+      autoDate: b.autoDate ?? false,
     }));
     renderBlockRows(blocks);
   }
@@ -618,8 +661,10 @@ async function duplicateStamp(rec: StampRecord): Promise<void> {
     return;
   }
   try {
-    const render = renderStamp(rec.params);
-    await insertStamp(render, rec.params, {
+    // Dynamic stamps re-stamp with today's date on duplicate ("stamp it again").
+    const params = applyDynamicFields(rec.params);
+    const render = renderStamp(params);
+    await insertStamp(render, params, {
       position: "cursor",
       keepGeometry: {
         top: rec.top + 24,
@@ -707,12 +752,8 @@ function bindEvents(): void {
       schedulePreview();
     });
   }
-  for (const id of ["boldChk", "italicChk", "underlineChk", "addDate", "randomTilt", "dividerChk"]) {
+  for (const id of ["boldChk", "italicChk", "underlineChk", "randomTilt", "dividerChk"]) {
     $(id).addEventListener("change", () => {
-      if (id === "addDate" && ($("addDate") as HTMLInputElement).checked) {
-        const dt = $("dateText") as HTMLInputElement;
-        if (!dt.value.trim()) dt.value = todayText();
-      }
       if (id === "randomTilt" && ($("randomTilt") as HTMLInputElement).checked) {
         const r = Math.round((Math.random() * 28 - 14));
         ($("rotationNum") as HTMLInputElement).value = String(r);
@@ -720,6 +761,16 @@ function bindEvents(): void {
       schedulePreview();
     });
   }
+  $("addDate").addEventListener("change", () => {
+    const dt = $("dateText") as HTMLInputElement;
+    if (($("addDate") as HTMLInputElement).checked && !dt.value.trim()) dt.value = todayText();
+    syncDateControls();
+    schedulePreview();
+  });
+  $("dynamicDateChk").addEventListener("change", () => {
+    syncDateControls();
+    schedulePreview();
+  });
   $("customColor").addEventListener("input", () => {
     selectSwatch(($("customColor") as HTMLInputElement).value);
   });

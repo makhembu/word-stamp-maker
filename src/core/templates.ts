@@ -135,6 +135,9 @@ export function defaultsFor(template: TemplateDef): StampParams {
     widthPts: template.defaultWidthPts,
     aspect: template.aspect ?? aspectForShape(template.shape),
     divider: template.divider,
+    // Date-bearing templates re-stamp with today's date on every insert by default;
+    // the user can switch to a fixed manual date in the task pane.
+    dynamicDate: template.supportsDate && template.id !== "custom",
   };
 }
 
@@ -148,4 +151,22 @@ export function formatDate(d: Date): string {
 /** Today's date, formatted. */
 export function todayText(): string {
   return formatDate(new Date());
+}
+
+/**
+ * Resolve dynamic fields to concrete text for a stamp that is about to be inserted.
+ * Pure: returns a new object, never mutates the input. When `dynamicDate` is set, the
+ * date line is re-filled with today's date; custom text blocks flagged `autoDate` get
+ * their text re-filled the same way. Everything else is preserved as-is.
+ */
+export function applyDynamicFields(p: StampParams): StampParams {
+  const today = todayText();
+  const next: StampParams = { ...p };
+  if (p.dynamicDate) next.dateText = today;
+  if (p.textBlocks && p.textBlocks.some((b) => b.autoDate)) {
+    next.textBlocks = p.textBlocks.map((b) =>
+      b.autoDate ? { ...b, text: today } : b
+    );
+  }
+  return next;
 }

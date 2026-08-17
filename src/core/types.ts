@@ -32,6 +32,8 @@ export interface TextBlock {
   underline?: boolean;
   /** Extra letter spacing in points between characters (negative condenses). */
   spacing?: number;
+  /** When set, this block's text is re-filled with today's date on every insert. */
+  autoDate?: boolean;
 }
 export type BorderStyle = "single" | "double";
 export type SizePreset = "small" | "medium" | "large" | "custom";
@@ -80,6 +82,9 @@ export interface StampParams {
   /** Custom stamps only: freely placed text elements. When present, the stamp is drawn
    *  by the generic custom renderer using `shape` as its outline. */
   textBlocks?: TextBlock[];
+  /** When set, dateText is re-filled with today's date on every insert (re-stamps with
+   *  the current date on demand, like Adobe's dynamic stamps). */
+  dynamicDate?: boolean;
 }
 
 /** Size of the rendered stamp, in Word points. */

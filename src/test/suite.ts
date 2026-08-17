@@ -11,7 +11,7 @@
 
 import { renderStamp } from "../core/renderer";
 import { deleteStamp, insertStamp, listStamps } from "../core/document";
-import { defaultsFor, TEMPLATES } from "../core/templates";
+import { applyDynamicFields, defaultsFor, TEMPLATES, todayText } from "../core/templates";
 import type { StampParams } from "../core/types";
 
 export interface TestResult {
@@ -247,6 +247,86 @@ export async function runTestSuite(): Promise<TestResult[]> {
       if (rotation === null) return { pass: false, detail: "Stamp shape not found" };
       if (!approx(rotation, 27, 0.01)) return { pass: false, detail: `Expected rotation 27, got ${rotation}` };
       return { pass: true, detail: `Shape rotation = ${rotation}°` };
+    })
+  );
+
+  results.push(
+    await runOne("Dynamic date re-fills with today's date", async () => {
+      const params = testStampParams({ dynamicDate: true, dateText: "01 JAN 2000" });
+      const resolved = applyDynamicFields(params);
+      if (resolved.dateText !== todayText()) {
+        return { pass: false, detail: `Expected "${todayText()}", got "${resolved.dateText}"` };
+      }
+      return { pass: true, detail: `"01 JAN 2000" re-filled to "${resolved.dateText}"` };
+    })
+  );
+
+  results.push(
+    await runOne("Manual date is preserved when dynamic date is off", async () => {
+      const params = testStampParams({ dynamicDate: false, dateText: "05 MAY 2026" });
+      const resolved = applyDynamicFields(params);
+      if (resolved.dateText !== "05 MAY 2026") {
+        return { pass: false, detail: `Expected "05 MAY 2026", got "${resolved.dateText}"` };
+      }
+      return { pass: true, detail: `Manual date "${resolved.dateText}" preserved` };
+    })
+  );
+
+  results.push(
+    await runOne("Custom auto-date block re-fills, other blocks untouched", async () => {
+      const params = testStampParams({
+        templateId: "custom",
+        dynamicDate: false,
+        textBlocks: [
+          { id: "b0", text: "RECEIVED", size: 16, y: 25, align: "center" as const },
+          { id: "b1", text: "01 JAN 2000", size: 12, y: 70, align: "center" as const, autoDate: true },
+        ],
+      });
+      const resolved = applyDynamicFields(params);
+      const blocks = resolved.textBlocks || [];
+      const auto = blocks.find((b) => b.autoDate);
+      const plain = blocks.find((b) => b.id === "b0");
+      if (!auto || auto.text !== todayText()) {
+        return { pass: false, detail: `Auto block text "${auto?.text}" != "${todayText()}"` };
+      }
+      if (plain?.text !== "RECEIVED") {
+        return { pass: false, detail: `Plain block changed to "${plain?.text}"` };
+      }
+      return { pass: true, detail: `Auto block "${auto.text}", plain block "${plain.text}"` };
+    })
+  );
+
+  results.push(
+    await runOne("Dynamic date stamp round-trips through Word with today's date", async () => {
+      const params = applyDynamicFields(
+        testStampParams({ templateId: "received", shape: "rectangle", mainText: "RECEIVED", dateText: "01 JAN 2000", dynamicDate: true })
+      );
+      const render = renderStamp(params);
+      const { id } = await insertStamp(render, params, { position: "cursor" });
+      createdIds.push(id);
+
+      const altText = await Word.run(async (ctx) => {
+        const shapes = ctx.document.body.shapes.getByTypes([Word.ShapeType.picture]);
+        shapes.load("items");
+        await ctx.sync();
+        for (const s of shapes.items) {
+          if (s.name === `StampMaker::${id}`) {
+            s.load("altTextDescription");
+            await ctx.sync();
+            return s.altTextDescription;
+          }
+        }
+        return null;
+      });
+      if (!altText) return { pass: false, detail: "Stamp shape not found" };
+      const parsed = JSON.parse(altText) as StampParams;
+      if (parsed.dateText !== todayText()) {
+        return { pass: false, detail: `Inserted date "${parsed.dateText}" != "${todayText()}"` };
+      }
+      if (!parsed.dynamicDate) {
+        return { pass: false, detail: "dynamicDate flag was not persisted" };
+      }
+      return { pass: true, detail: `Inserted RECEIVED stamp carries "${parsed.dateText}" and stays dynamic` };
     })
   );
 

@@ -176,8 +176,11 @@ edit, duplicate, and delete the stamps this add-in created.
 ### Design tab
 1. **Choose a design** — APPROVED, REJECTED, CONFIDENTIAL, URGENT, PAID, RECEIVED, COPY,
    ORIGINAL (double circle), DRAFT, OFFICIAL SEAL, DATE, SIGNATURE, DIAGONAL, and CUSTOM.
-2. **Text** — fixed designs use text, second line, date (auto-filled with today when
-   "Add date" is checked), reference number, department, and name fields as applicable.
+2. **Text** — fixed designs use text, second line, date, reference number, department,
+   and name fields as applicable. Date-bearing templates (RECEIVED, DATE, DRAFT,
+   SIGNATURE) default to **"Today's date"**: the stamp re-stamps with the current date
+   every time it is inserted, duplicated, or edited, so a RECEIVED stamp always shows
+   the day it was actually applied. Untick "Today's date" to type a fixed date instead.
 3. **CUSTOM builder** — the real design-your-own tool:
    - pick the outline **shape**: rectangle, rounded rectangle, circle, double circle,
      ellipse, diamond, hexagon, or octagon;
@@ -186,6 +189,8 @@ edit, duplicate, and delete the stamps this add-in created.
      points — the classic official-seal look) — so you can build e.g. a two-line office
      stamp, a centered seal with small text around it, or a bordered box with text at the
      top and bottom, each line styled independently;
+   - tick **Today** on any line to make it an auto date: it re-fills with the current
+     date whenever the stamp is inserted or duplicated;
    - tick **"Wavy divider line"** to separate lines, and save the whole design with
      **💾 Save design** — saved designs appear in the gallery (dashed chips) and in the
      custom section, ready to load, edit, and delete anytime (stored on this machine).
@@ -236,10 +241,14 @@ move*:
 3. ✅ Stamp on a long multi-page document (300 paragraphs) → no reflow.
 4. ✅ Rotation is applied to the floating shape.
 5. ✅ Metadata round-trips (stamps are editable later).
-6. ✅ Edit-in-place preserves position, stamp count, and updates text.
-7. ✅ Duplicate creates an offset copy.
-8. ✅ Delete removes only the targeted stamp.
-9. ✅ Quick-position preset lands inside the page.
+6. ✅ Dynamic date re-fills with today's date.
+7. ✅ Manual date is preserved when dynamic is off.
+8. ✅ Custom auto-date block re-fills; other blocks untouched.
+9. ✅ Dynamic-date stamp round-trips through Word carrying today's date.
+10. ✅ Edit-in-place preserves position, stamp count, and updates text.
+11. ✅ Duplicate creates an offset copy.
+12. ✅ Delete removes only the targeted stamp.
+13. ✅ Quick-position preset lands inside the page.
 
 Manual checklist (do these once in Word):
 

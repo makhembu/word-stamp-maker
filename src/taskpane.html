@@ -388,9 +388,15 @@
             <label for="secondLineSize">Second line size</label>
             <input type="number" id="secondLineSize" min="6" max="60" value="11" />
           </div>
-          <div class="row" id="dateRow" hidden>
-            <label class="check"><input type="checkbox" id="addDate" /> Add date</label>
-            <input type="text" id="dateText" placeholder="17 AUG 2026" />
+          <div id="dateRow" hidden>
+            <div class="row">
+              <label class="check"><input type="checkbox" id="addDate" /> Add date</label>
+              <label class="check" title="Always stamp with today's date, even days later"><input type="checkbox" id="dynamicDateChk" /> Today's date</label>
+            </div>
+            <div class="field" style="margin-top:8px">
+              <label for="dateText">Date text</label>
+              <input type="text" id="dateText" placeholder="17 AUG 2026" />
+            </div>
           </div>
           <div class="field" id="refField" hidden>
             <label for="refText">Reference / number</label>
