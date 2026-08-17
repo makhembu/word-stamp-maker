@@ -58,6 +58,7 @@ You can also preview all stamp designs without Word at all:
 ```bash
 npm run smoke        # renders every design headlessly + writes sample-stamps.png
 npm run gallery      # regenerates the 15 landing-page gallery PNGs (assets/gallery/)
+npm run social       # regenerates the Open Graph / Twitter card (assets/social-card.png)
 ```
 
 Open `sample-stamps.png` to eyeball the built-in designs and edge cases.
@@ -137,7 +138,9 @@ Manual fallback (no installer):
 
 * Repo **Description** (shown in search results): `Free Word add-in for rubber stamps — APPROVED, CONFIDENTIAL, seals, date & signature stamps that overlay text without reflowing it. Install in Word: Insert → Add-ins → Upload My Add-in.`
 * Repo **Topics**: `office-add-in`, `word-add-in`, `microsoft-word`, `office-js`, `typescript`, `rubber-stamp`, `stamp`, `word`.
-* The landing page (`index.html`) already ships with title, description, Open Graph, Twitter cards, and JSON-LD structured data — it's indexed automatically via GitHub Pages.
+* The landing page (`index.html`) ships with title, description, Open Graph, Twitter cards, and JSON-LD structured data — it's indexed automatically via GitHub Pages.
+* The build bakes the deployed origin into the page: `canonical`, `og:url`, `og:image`/`twitter:image` (the 1200×630 social card in `assets/social-card.png`, regenerated with `npm run social`), and the JSON-LD `url`/`image` all point at the real host — never a relative path.
+* `robots.txt` (emitted at build) points crawlers at `sitemap.xml`, and `sitemap.xml` is emitted at the site root — both are already submitted-ready for Google Search Console.
 
 ---
 

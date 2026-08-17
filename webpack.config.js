@@ -128,6 +128,27 @@ module.exports = async (env, argv) => {
           });
         },
       },
+      // Rewrite __BASE_URL__ placeholders in the copied landing page so the canonical
+      // URL, og:url, og:image, and JSON-LD all point at the real deployed origin.
+      {
+        apply(compiler) {
+          compiler.hooks.emit.tapAsync("StampMakerIndexRewrite", (compilation, callback) => {
+            try {
+              const asset = compilation.assets["index.html"];
+              if (asset) {
+                const out = asset.source().toString().split("__BASE_URL__").join(BASE_URL);
+                compilation.assets["index.html"] = {
+                  source: () => out,
+                  size: () => Buffer.byteLength(out),
+                };
+              }
+            } catch (err) {
+              compilation.errors.push(new Error(`Failed to rewrite index.html: ${err.message}`));
+            }
+            callback();
+          });
+        },
+      },
     ],
     devServer: {
       host: HOST,

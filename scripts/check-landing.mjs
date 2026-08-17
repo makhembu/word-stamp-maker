@@ -88,6 +88,41 @@ ok(/Microsoft 365/.test(faq.text), "FAQ covers Word versions (Microsoft 365)");
 ok(/Mac/.test(faq.text), "FAQ covers Mac");
 ok(/(tracking|account|never leaves your machine|collect my data)/i.test(faq.text), "FAQ covers privacy");
 
+// SEO head: canonical + OG must be absolute (the deployed origin), the social card
+// must exist and serve, and JSON-LD must be complete enough for rich results.
+const seo = await page.evaluate(() => {
+  const q = (sel, attr) => document.querySelector(sel)?.getAttribute(attr) || "";
+  const ld = JSON.parse(document.querySelector('script[type="application/ld+json"]')?.textContent || "{}");
+  return {
+    canon: q('link[rel="canonical"]', "href"),
+    ogUrl: q('meta[property="og:url"]', "content"),
+    ogImage: q('meta[property="og:image"]', "content"),
+    ogSite: q('meta[property="og:site_name"]', "content"),
+    twImage: q('meta[name="twitter:image"]', "content"),
+    twCard: q('meta[name="twitter:card"]', "content"),
+    keywords: !!document.querySelector('meta[name="keywords"]'),
+    ld,
+  };
+});
+ok(/^https:\/\//.test(seo.canon) && seo.canon.endsWith("/"), `canonical is absolute (${seo.canon})`);
+ok(/^https:\/\//.test(seo.ogUrl), `og:url is absolute (${seo.ogUrl})`);
+ok(/^https:\/\/.+social-card\.png$/.test(seo.ogImage), `og:image points at social-card.png (${seo.ogImage})`);
+ok(seo.twImage === seo.ogImage, "twitter:image matches og:image");
+ok(seo.twCard === "summary_large_image", `twitter card is summary_large_image (got ${seo.twCard || "none"})`);
+ok(seo.ogSite === "Stamp Maker", "og:site_name is set");
+ok(!seo.keywords, "no stale keywords meta tag");
+ok(!!seo.ld.url && !!seo.ld.image && Array.isArray(seo.ld.sameAs) && seo.ld.sameAs.length > 0, "JSON-LD has url, image, and sameAs");
+ok(seo.ld["@type"] === "SoftwareApplication" && seo.ld.offers?.price === "0", "JSON-LD is a free SoftwareApplication");
+const socialOk = await page.evaluate(async (u) => {
+  try {
+    const r = await fetch(u);
+    return r.ok;
+  } catch {
+    return false;
+  }
+}, seo.ogImage);
+ok(socialOk, `social card image serves (${seo.ogImage})`);
+
 await page.screenshot({ path: "landing.png", fullPage: true });
 await browser.close();
 console.log(failures ? `\n${failures} failure(s)` : "\nAll landing-page checks passed.");
