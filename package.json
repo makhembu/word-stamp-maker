@@ -12,7 +12,8 @@
     "validate": "office-addin-manifest validate manifest.xml",
     "certs": "office-addin-dev-certs install",
     "icons": "node scripts/gen-icons.mjs",
-    "smoke": "npx tsc src/core/renderer.ts src/core/templates.ts src/core/types.ts --outDir .smoke --module commonjs --target es2019 --skipLibCheck --esModuleInterop && node scripts/smoke-render.mjs"
+    "smoke": "npx tsc src/core/renderer.ts src/core/templates.ts src/core/types.ts --outDir .smoke --module commonjs --target es2019 --skipLibCheck --esModuleInterop && node scripts/smoke-render.mjs",
+    "check-pane": "npm exec --yes --package=playwright -- node scripts/check-pane.mjs"
   },
   "devDependencies": {
     "@napi-rs/canvas": "^1.0.6",

@@ -2,6 +2,7 @@ node_modules/
 dist/
 .smoke/
 sample-stamps.png
+pane-*.png
 *.log
 .DS_Store
 Thumbs.db
