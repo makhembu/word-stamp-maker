@@ -71,6 +71,23 @@ ok(dl?.download, "download CTA uses the download attribute");
 ok(/installer/i.test(dl?.text || ""), "download CTA says installer");
 ok(/installer/i.test(copy), "install steps mention the installer");
 
+// FAQ: present, populated, and covering the promised topics (versions, Mac, privacy).
+// Closed <details> hide their answers from innerText, so open them first.
+const faq = await page.evaluate(() => {
+  const items = Array.from(document.querySelectorAll(".faq-item"));
+  items.forEach((i) => (i.open = true));
+  return {
+    count: items.length,
+    emptySummaries: items.filter((i) => !(i.querySelector("summary")?.textContent.trim())).length,
+    text: document.querySelector(".faq")?.innerText || "",
+  };
+});
+ok(faq.count >= 6, `FAQ has at least 6 questions (found ${faq.count})`);
+ok(faq.emptySummaries === 0, "every FAQ question has a summary");
+ok(/Microsoft 365/.test(faq.text), "FAQ covers Word versions (Microsoft 365)");
+ok(/Mac/.test(faq.text), "FAQ covers Mac");
+ok(/(tracking|account|never leaves your machine|collect my data)/i.test(faq.text), "FAQ covers privacy");
+
 await page.screenshot({ path: "landing.png", fullPage: true });
 await browser.close();
 console.log(failures ? `\n${failures} failure(s)` : "\nAll landing-page checks passed.");

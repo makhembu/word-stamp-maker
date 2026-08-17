@@ -221,6 +221,37 @@
       padding: 14px 18px; font-size: 14.5px; color: var(--ink-soft);
     }
 
+    /* faq: accessible <details> accordions, no JS required */
+    .faq { max-width: 760px; }
+    .faq-item {
+      background: var(--card); border: 1px solid var(--line); border-radius: var(--radius);
+      margin-bottom: 10px;
+      transition: border-color 0.15s ease-out;
+    }
+    .faq-item[open] { border-color: rgba(193, 47, 36, 0.45); }
+    .faq-item summary {
+      list-style: none; cursor: pointer;
+      display: flex; align-items: center; justify-content: space-between; gap: 16px;
+      padding: 18px 20px;
+      font-weight: 600; font-size: 16px; color: var(--ink);
+      transition: color 0.15s ease-out;
+    }
+    .faq-item summary::-webkit-details-marker { display: none; }
+    .faq-item summary:hover { color: var(--red); }
+    .faq-item summary:focus-visible {
+      outline: 2px solid var(--red); outline-offset: -2px; border-radius: var(--radius);
+    }
+    .faq-chev {
+      flex-shrink: 0; color: var(--red);
+      transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .faq-item[open] .faq-chev { transform: rotate(45deg); }
+    .faq-item p {
+      margin: 0; padding: 14px 20px 20px;
+      border-top: 1px dashed var(--line);
+      color: var(--ink-soft); font-size: 15.5px;
+    }
+
     /* org band: ink-dark contrast */
     .org { background: var(--ink); color: var(--paper); }
     .org h2 {
@@ -269,6 +300,7 @@
       <a href="#why">Why</a>
       <a href="#designs">Designs</a>
       <a href="#install">Install</a>
+      <a href="#faq">FAQ</a>
       <a class="nav-cta" href="stamp-maker-setup.zip" download>Download installer</a>
     </div>
   </nav>
@@ -364,6 +396,45 @@
         Mac: copy that file into <code>~/Library/Containers/com.microsoft.Word/Data/Documents/wef</code>.
         <strong>Requirements:</strong> Word <strong>desktop</strong> (Microsoft 365) on Windows or Mac — not
         Word for the web, Word 2013/2016/2019, or iPad.
+      </div>
+    </div>
+  </section>
+
+  <section id="faq">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <span class="section-tag">FAQ</span>
+        <h2>Good questions, straight answers</h2>
+      </div>
+      <div class="faq">
+        <details class="faq-item reveal">
+          <summary>What exactly is Stamp Maker?<svg class="faq-chev" viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M8 3v10M3 8h10"/></svg></summary>
+          <p>It is a <strong>Microsoft Word add-in</strong> — a small program that runs inside Word, not a separate website or app. Installing it adds a <strong>Design Stamp</strong> button to Word's Home tab. Click it and a task pane opens where you pick a design, type your text, and press the stamp onto the page.</p>
+        </details>
+        <details class="faq-item reveal">
+          <summary>Which versions of Word does it work with?<svg class="faq-chev" viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M8 3v10M3 8h10"/></svg></summary>
+          <p>Word <strong>desktop</strong> with a <strong>Microsoft 365 subscription</strong>, on Windows or Mac. It does not run in Word for the web, on iPad, or in the older one-time-purchase versions (Word 2013, 2016, 2019). If Word can't support it, the add-in detects that and shows a clear message instead of failing silently.</p>
+        </details>
+        <details class="faq-item reveal">
+          <summary>Does it work on Mac?<svg class="faq-chev" viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M8 3v10M3 8h10"/></svg></summary>
+          <p>Yes. The download zip includes <code>install-mac.command</code> for macOS — double-click it (right-click → Open the first time, so macOS lets it run). The add-in then appears under <strong>Home → Add-ins</strong> in Word for Mac, with the same features as Windows.</p>
+        </details>
+        <details class="faq-item reveal">
+          <summary>Is it really free? Do you collect my data?<svg class="faq-chev" viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M8 3v10M3 8h10"/></svg></summary>
+          <p>Free, with no account, no ads, and no tracking. Stamps are designed and rendered <strong>on your own computer</strong> and inserted into your document as ordinary Word pictures — your document never leaves your machine. The add-in itself is loaded from the web the way normal Word add-ins are, so Word needs internet to fetch it when it opens; after that, everything runs locally and the stamps are saved inside your .docx file.</p>
+        </details>
+        <details class="faq-item reveal">
+          <summary>Will inserting a stamp mess up my document?<svg class="faq-chev" viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M8 3v10M3 8h10"/></svg></summary>
+          <p>No. Stamps are <strong>floating images wrapped in front of text</strong>, so they sit on top of your page like a physical rubber stamp: no paragraphs are added, no blank lines appear, and nothing gets pushed to another page. The add-in ships with an automated test suite that verifies exactly this on every build.</p>
+        </details>
+        <details class="faq-item reveal">
+          <summary>Can I edit a stamp after it's inserted?<svg class="faq-chev" viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M8 3v10M3 8h10"/></svg></summary>
+          <p>Yes. The <strong>Stamps tab</strong> lists every stamp the add-in created in the open document: edit the text or design in place (position and rotation are preserved), duplicate it, or delete it. You can also drag, resize, and rotate any stamp directly in Word.</p>
+        </details>
+        <details class="faq-item reveal">
+          <summary>How do I uninstall it?<svg class="faq-chev" viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M8 3v10M3 8h10"/></svg></summary>
+          <p>Windows: double-click <code>uninstall-windows.bat</code> (included in the download zip). Mac: delete the file <code>~/Library/Containers/com.microsoft.Word/Data/Documents/wef/stamp-maker.xml</code>, then restart Word.</p>
+        </details>
       </div>
     </div>
   </section>
