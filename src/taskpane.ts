@@ -33,6 +33,13 @@ function val(id: string): string {
   return ($(id) as HTMLInputElement | HTMLSelectElement).value;
 }
 
+// Inline SVG icons (stroke = currentColor) so the UI never relies on emoji glyphs.
+const ICONS = {
+  x: '<svg viewBox="0 0 16 16" width="11" height="11" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg>',
+  check: '<svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8.5l3.5 3.5L13 4.5"/></svg>',
+};
+
+
 // ---------- State ----------
 let editingId: string | null = null;
 let editingRecord: StampRecord | null = null;
@@ -217,7 +224,7 @@ function addBlockRow(block?: Partial<TextBlock>): void {
       <label class="check mini" title="Bold"><input type="checkbox" class="block-bold" ${bold ? "checked" : ""} /> B</label>
       <label class="check mini" title="Italic"><input type="checkbox" class="block-italic" ${italic ? "checked" : ""} /> I</label>
       <label class="check mini" title="Underline"><input type="checkbox" class="block-underline" ${underline ? "checked" : ""} /> U</label>
-      <button type="button" class="block-del" title="Remove this text">✕</button>
+      <button type="button" class="block-del" title="Remove this text">${ICONS.x}</button>
     </div>
     <div class="row block-opts">
       <div class="field" style="flex:0 0 62px">
@@ -299,7 +306,9 @@ function blocksFromUI(): TextBlock[] {
 function refreshSavedDesigns(): void {
   const wrap = $("savedDesigns");
   wrap.innerHTML = "";
-  for (const d of loadSavedDesigns()) {
+  const designs = loadSavedDesigns();
+  $("savedDesignsEmpty").hidden = designs.length > 0;
+  for (const d of designs) {
     const chip = document.createElement("div");
     chip.className = "saved-chip";
     chip.title = "Load this design";
@@ -310,7 +319,7 @@ function refreshSavedDesigns(): void {
     del.type = "button";
     del.className = "del";
     del.title = "Delete this design";
-    del.textContent = "✕";
+    del.innerHTML = ICONS.x;
     del.addEventListener("click", (e) => {
       e.stopPropagation();
       deleteSavedDesign(d.id);
@@ -333,8 +342,7 @@ function loadSavedIntoUI(d: SavedDesign): void {
   const customTpl = TEMPLATES.find((t) => t.id === "custom")!;
   loadParamsIntoUI(d.params);
   applyFieldVisibility(customTpl);
-  ($("tabBtn-design") as HTMLButtonElement).click();
-  toast(`Loaded "${d.name}" ✓`);
+  ($("tabBtn-design") as HTMLButtonElement).click();      toast(`Loaded "${d.name}"`);
 }
 
 // ---------- Params ----------
@@ -435,7 +443,7 @@ function updateEditBanner(): void {
   const banner = $("editBanner");
   if (editingId) {
     const tpl = TEMPLATES.find((t) => t.id === editingRecord?.params?.templateId);
-    $("editBannerText").textContent = `Updating "${editingRecord?.params?.mainText || tpl?.label || "stamp"}" — changes apply in place.`;
+    $("editBannerText").textContent = `Updating "${editingRecord?.params?.mainText || tpl?.label || "stamp"}". Changes apply in place.`;
     banner.hidden = false;
   } else {
     banner.hidden = true;
@@ -466,10 +474,10 @@ async function applyStamp(): Promise<void> {
       });
       editingId = null;
       editingRecord = null;
-      toast("Stamp updated ✓");
+      toast("Stamp updated");
     } else {
       await insertStamp(render, params, { position: "cursor" });
-      toast("Stamp inserted ✓");
+      toast("Stamp inserted");
     }
     updateEditBanner();
     await refreshManage();
@@ -621,7 +629,7 @@ async function duplicateStamp(rec: StampRecord): Promise<void> {
         relativeVerticalPosition: rec.relativeVerticalPosition,
       },
     });
-    toast("Stamp duplicated ✓");
+    toast("Stamp duplicated");
     await refreshManage();
   } catch (e) {
     toast(`Duplicate failed: ${errorMessage(e)}`, true);
@@ -642,8 +650,9 @@ async function removeStamp(rec: StampRecord): Promise<void> {
 // ---------- Tests ----------
 async function runTests(): Promise<void> {
   const btn = $("runTestsBtn") as HTMLButtonElement;
+  const label = $("runTestsLabel");
   btn.disabled = true;
-  btn.textContent = "Running…";
+  label.textContent = "Running…";
   const resultsEl = $("testResults");
   resultsEl.innerHTML = '<div class="empty">Running tests inside Word…</div>';
   try {
@@ -652,15 +661,18 @@ async function runTests(): Promise<void> {
     for (const r of results) {
       const div = document.createElement("div");
       div.className = `test-result ${r.pass ? "pass" : "fail"}`;
-      div.innerHTML = `<div class="tname">${r.pass ? "✓" : "✗"} ${escapeHtml(r.name)}</div>` +
+      const mark = r.pass
+        ? `<span class="icon-ok">${ICONS.check}</span>`
+        : `<span class="icon-bad">${ICONS.x}</span>`;
+      div.innerHTML = `<div class="tname">${mark} ${escapeHtml(r.name)}</div>` +
         (r.detail ? `<div class="tdetail">${escapeHtml(r.detail)}</div>` : "");
       resultsEl.appendChild(div);
     }
   } catch (e) {
-    resultsEl.innerHTML = `<div class="test-result fail"><div class="tname">✗ Suite crashed</div><div class="tdetail">${escapeHtml(errorMessage(e))}</div></div>`;
+    resultsEl.innerHTML = `<div class="test-result fail"><div class="tname"><span class="icon-bad">${ICONS.x}</span> Suite crashed</div><div class="tdetail">${escapeHtml(errorMessage(e))}</div></div>`;
   } finally {
     btn.disabled = false;
-    btn.textContent = "▶ Run test suite";
+    label.textContent = "Run test suite";
   }
 }
 
@@ -726,7 +738,7 @@ function bindEvents(): void {
     saveDesign(name, paramsFromUI());
     refreshSavedDesigns();
     buildTemplateGrid();
-    toast("Design saved ✓");
+    toast("Design saved");
   });
   $("designName").addEventListener("keydown", (e) => {
     if (e.key === "Enter") ($("saveDesignBtn") as HTMLButtonElement).click();

@@ -142,7 +142,7 @@ export async function runTestSuite(): Promise<TestResult[]> {
   results.push(
     await runOne("Stamp over a table leaves the table untouched", async () => {
       const scaffolded = await ensureScaffold();
-      if (!scaffolded) return { pass: false, detail: "Scaffold content control unavailable — skipped" };
+      if (!scaffolded) return { pass: false, detail: "Scaffold content control unavailable (skipped)" };
 
       const tableBefore = await Word.run(async (ctx) => {
         const cc = ctx.document.contentControls.getByTag("stamp-maker-test").getFirst();
@@ -201,12 +201,12 @@ export async function runTestSuite(): Promise<TestResult[]> {
   results.push(
     await runOne("Stamp on a long multi-page document causes zero reflow", async () => {
       const scaffolded = await ensureScaffold();
-      if (!scaffolded) return { pass: false, detail: "Scaffold content control unavailable — skipped" };
+      if (!scaffolded) return { pass: false, detail: "Scaffold content control unavailable (skipped)" };
 
       await Word.run(async (ctx) => {
         const cc = ctx.document.contentControls.getByTag("stamp-maker-test").getFirst();
         for (let i = 0; i < 300; i++) {
-          cc.insertParagraph(`Test line ${i} — the quick brown fox jumps over the lazy dog.`, Word.InsertLocation.end);
+          cc.insertParagraph(`Test line ${i}: the quick brown fox jumps over the lazy dog.`, Word.InsertLocation.end);
         }
         await ctx.sync();
       });
@@ -420,7 +420,7 @@ export async function runTestSuite(): Promise<TestResult[]> {
 
   const passCount = results.filter((r) => r.pass).length;
   results.unshift({
-    name: `Suite summary — ${passCount}/${results.length} passed`,
+    name: `Suite summary: ${passCount}/${results.length} passed`,
     pass: passCount === results.length,
     detail: "All test stamps and scaffolding were removed afterwards.",
   });

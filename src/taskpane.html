@@ -8,10 +8,10 @@
   <style>
     :root {
       --ink: #1f2430;
-      --muted: #6b7280;
-      --line: #e5e7eb;
-      --bg: #f7f8fa;
-      --panel: #ffffff;
+      --muted: #69707c;
+      --line: #e4e6ea;
+      --bg: #f6f6f4;      /* neutrals tinted warm toward the ink-red brand hue */
+      --panel: #fdfdfc;
       --accent: #c62828;
       --accent-dark: #9e1f1f;
       --ok: #1e7a3c;
@@ -27,6 +27,26 @@
       line-height: 1.4;
     }
     #app { display: flex; flex-direction: column; height: 100vh; }
+
+    /* a11y: keyboard focus, reduced motion, quiet scrollbar, icon+label buttons */
+    button:focus-visible, input:focus-visible, select:focus-visible {
+      outline: 2px solid rgba(198, 40, 40, 0.55);
+      outline-offset: 1px;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { transition: none !important; animation: none !important; }
+    }
+    main::-webkit-scrollbar { width: 8px; }
+    main::-webkit-scrollbar-thumb { background: #d2d5da; border-radius: 4px; }
+    main::-webkit-scrollbar-track { background: transparent; }
+    .btn-icon { display: inline-flex; align-items: center; gap: 6px; justify-content: center; }
+    .btn-icon svg { flex-shrink: 0; }
+
+    /* tactile feedback: every button responds physically to a press */
+    button { transition: transform 0.08s ease-out, border-color 0.15s ease-out, background 0.15s ease-out, color 0.15s ease-out, box-shadow 0.15s ease-out; }
+    button:active:not(:disabled) { transform: scale(0.96); }
+    .primary-btn:active:not(:disabled) { transform: scale(0.985); }
+    .swatch:active { transform: scale(0.92); }
 
     header {
       background: var(--panel);
@@ -221,6 +241,11 @@
     #addBlockBtn { width: 100%; }
     .save-design { margin-top: 4px; }
     #savedDesigns { margin-top: 8px; display: flex; flex-direction: column; gap: 6px; }
+    .hint-empty {
+      font-size: 12px; color: var(--muted);
+      border: 1px dashed #d3d7de; border-radius: 7px;
+      padding: 8px 10px; margin-top: 8px;
+    }
     .saved-chip {
       display: flex; align-items: center; gap: 6px;
       border: 1px solid var(--line); background: var(--panel);
@@ -285,10 +310,12 @@
       background: var(--panel); border: 1px solid var(--line);
       border-radius: 8px; padding: 9px 11px; margin-bottom: 7px; font-size: 12.5px;
     }
-    .test-result.pass { border-left: 4px solid var(--ok); }
-    .test-result.fail { border-left: 4px solid var(--accent); }
-    .test-result .tname { font-weight: 700; }
+    .test-result.pass { border-color: #b7dcbf; background: #f3faf4; }
+    .test-result.fail { border-color: #eebfbf; background: #fdf4f4; }
+    .test-result .tname { font-weight: 700; display: flex; align-items: center; gap: 7px; }
     .test-result .tdetail { color: var(--muted); font-size: 11.5px; margin-top: 2px; }
+    .icon-ok { color: var(--ok); display: inline-flex; flex-shrink: 0; }
+    .icon-bad { color: var(--accent); display: inline-flex; flex-shrink: 0; }
 
     #toast {
       position: fixed; left: 50%; bottom: 84px; transform: translateX(-50%);
@@ -383,13 +410,20 @@
         <div id="customTextSection" hidden>
           <div class="section-label">Text <span class="hint">: add as many lines as you need</span></div>
           <div id="textBlocksList"></div>
-          <button id="addBlockBtn" type="button" class="ghost-btn">＋ Add text</button>
+          <button id="addBlockBtn" type="button" class="ghost-btn btn-icon">
+            <svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M8 3v10M3 8h10"/></svg>
+            Add text
+          </button>
           <div class="save-design">
             <div class="row" style="margin-top:12px">
               <input type="text" id="designName" placeholder="Design name, e.g. My stamp" maxlength="32" />
-              <button id="saveDesignBtn" type="button" class="ghost-btn strong">💾 Save design</button>
+              <button id="saveDesignBtn" type="button" class="ghost-btn strong btn-icon">
+                <svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 2.5h9.5L14 5v8.5H2.5z"/><path d="M5.5 2.5v4h5v-4M5 13.5v-4.5h6v4.5"/></svg>
+                Save design
+              </button>
             </div>
             <div id="savedDesigns"></div>
+            <div id="savedDesignsEmpty" class="hint-empty" hidden>Build a stamp, give it a name, and press Save design to keep it here.</div>
           </div>
         </div>
 
@@ -486,7 +520,10 @@
       <!-- Manage -->
       <section id="tab-manage" hidden>
         <div class="toolbar">
-          <button id="refreshBtn">↻ Refresh</button>
+          <button id="refreshBtn" class="btn-icon">
+            <svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 8a5 5 0 1 1-1.46-3.54"/><path d="M13 2v3.5H9.5"/></svg>
+            Refresh
+          </button>
         </div>
         <div id="stampList"></div>
         <div id="manageEmpty" class="empty">
@@ -504,7 +541,10 @@
           afterwards. Use a scratch document if you prefer.
         </div>
         <div class="toolbar">
-          <button id="runTestsBtn">▶ Run test suite</button>
+          <button id="runTestsBtn" class="btn-icon">
+            <svg viewBox="0 0 16 16" width="10" height="10" fill="currentColor" aria-hidden="true"><path d="M5 3.5l7 4.5-7 4.5z"/></svg>
+            <span id="runTestsLabel">Run test suite</span>
+          </button>
         </div>
         <div id="testResults"></div>
       </section>
