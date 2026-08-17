@@ -365,12 +365,16 @@ function renderCustomStamp(
   for (const { b, y } of positioned) {
     const desired = b.size * SCALE;
     const size = Math.min(desired, fitFontSize(ctx, b.text, maxW, desired, 6 * SCALE));
-    setFont(ctx, p.fontFamily, size, p.bold, p.italic);
+    // Per-block style wins; otherwise fall back to the stamp-wide style.
+    const bold = b.bold ?? p.bold;
+    const italic = b.italic ?? p.italic;
+    const underline = b.underline ?? p.underline;
+    setFont(ctx, p.fontFamily, size, bold, italic);
     if (b.align === "center") {
-      fillTextStyled(ctx, b.text, W / 2, y, ink, "center", p.underline, size);
+      fillTextStyled(ctx, b.text, W / 2, y, ink, "center", underline, size);
     } else {
       const edge = b.align === "left" ? pad * 1.7 : W - pad * 1.7;
-      fillTextStyled(ctx, b.text, edge, y, ink, b.align, p.underline, size);
+      fillTextStyled(ctx, b.text, edge, y, ink, b.align, underline, size);
     }
   }
 }

@@ -222,6 +222,7 @@ function applyFieldVisibility(tpl: { supportsSecondLine: boolean; supportsDate: 
   $("nameField").hidden = !tpl.supportsName;
   $("shapeField").hidden = !isCustom;
   $("fontSizeField").hidden = isCustom;
+  $("formatField").hidden = isCustom;
   $("alignField").hidden = isCustom;
   $("dividerField").hidden = isCustom
     ? false
@@ -240,9 +241,15 @@ function addBlockRow(block?: Partial<TextBlock>): void {
   const size = block?.size ?? 18;
   const y = block?.y ?? 40;
   const align = block?.align ?? "center";
+  const bold = block?.bold ?? true;
+  const italic = block?.italic ?? false;
+  const underline = block?.underline ?? false;
   row.innerHTML = `
     <div class="row">
       <input type="text" class="block-text" maxlength="48" placeholder="Text…" value="${escapeAttr(block?.text ?? "")}" />
+      <label class="check mini" title="Bold"><input type="checkbox" class="block-bold" ${bold ? "checked" : ""} /> B</label>
+      <label class="check mini" title="Italic"><input type="checkbox" class="block-italic" ${italic ? "checked" : ""} /> I</label>
+      <label class="check mini" title="Underline"><input type="checkbox" class="block-underline" ${underline ? "checked" : ""} /> U</label>
       <button type="button" class="block-del" title="Remove this text">✕</button>
     </div>
     <div class="row block-opts">
@@ -263,6 +270,9 @@ function addBlockRow(block?: Partial<TextBlock>): void {
     </div>`;
   row.querySelector(".block-text")!.addEventListener("input", schedulePreview);
   row.querySelector(".block-size")!.addEventListener("input", schedulePreview);
+  for (const cls of [".block-bold", ".block-italic", ".block-underline"]) {
+    row.querySelector(cls)!.addEventListener("change", schedulePreview);
+  }
   const yRange = row.querySelector(".block-y") as HTMLInputElement;
   const yVal = row.querySelector(".yval") as HTMLElement;
   yRange.addEventListener("input", () => {
@@ -304,6 +314,9 @@ function blocksFromUI(): TextBlock[] {
       size: Math.min(96, Math.max(6, parseInt((row.querySelector(".block-size") as HTMLInputElement).value, 10) || 18)),
       y: Math.min(96, Math.max(0, parseInt((row.querySelector(".block-y") as HTMLInputElement).value, 10) || 40)),
       align: (row.querySelector(".block-align") as HTMLSelectElement).value as TextAlign,
+      bold: (row.querySelector(".block-bold") as HTMLInputElement).checked,
+      italic: (row.querySelector(".block-italic") as HTMLInputElement).checked,
+      underline: (row.querySelector(".block-underline") as HTMLInputElement).checked,
     });
   }
   return out;
@@ -595,7 +608,7 @@ function loadParamsIntoUI(p: StampParams): void {
   // Custom stamps: rebuild the text-block editor from the saved params (or migrate
   // legacy custom stamps that used the old single second-line fields).
   if (p.templateId === "custom") {
-    const blocks: TextBlock[] =
+    const migrated: TextBlock[] =
       p.textBlocks && p.textBlocks.length
         ? p.textBlocks
         : [
@@ -604,6 +617,14 @@ function loadParamsIntoUI(p: StampParams): void {
               ? [{ id: "b1", text: p.secondLine, size: p.secondLineSize || 12, y: 70, align: "center" as const }]
               : []),
           ];
+    // Older stamps have no per-block style; inherit the stamp-wide style explicitly so
+    // re-saving doesn't silently change their look.
+    const blocks = migrated.map((b) => ({
+      ...b,
+      bold: b.bold ?? p.bold,
+      italic: b.italic ?? p.italic,
+      underline: b.underline ?? p.underline,
+    }));
     renderBlockRows(blocks);
   }
   schedulePreview();

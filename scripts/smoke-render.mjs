@@ -173,7 +173,14 @@ add(
 // Custom builder: outline shapes with freely placed text blocks.
 const customBase = defaultsFor(TEMPLATES.find((t) => t.id === "custom"));
 const mkBlocks = (rows) =>
-  rows.map(([text, size, y, align], i) => ({ id: "b" + i, text, size, y, align: align || "center" }));
+  rows.map(([text, size, y, align, style], i) => ({
+    id: "b" + i,
+    text,
+    size,
+    y,
+    align: align || "center",
+    ...(style || {}),
+  }));
 add(
   "custom blocks rectangle",
   {
@@ -244,6 +251,20 @@ add(
     textBlocks: mkBlocks([["COPY", 18, 50]]),
   },
   [{ x0: 0.2, y0: 0.05, x1: 0.8, y1: 0.55, min: 15 }]
+);
+add(
+  "custom per-block styles",
+  {
+    ...customBase,
+    shape: "rectangle",
+    widthPts: 200,
+    divider: true,
+    textBlocks: mkBlocks([
+      ["OFFICER ON DUTY", 15, 24, "center", { bold: true, underline: true }],
+      ["MAIN OFFICE", 13, 62, "center", { italic: true, bold: false }],
+    ]),
+  },
+  RECT_REGIONS
 );
 
 console.log("Rendering + probing…");

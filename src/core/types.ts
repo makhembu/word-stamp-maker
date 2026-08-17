@@ -26,6 +26,10 @@ export interface TextBlock {
   /** 0–100, percent of content height from the top. */
   y: number;
   align: TextAlign;
+  /** Per-block style overrides; fall back to the stamp-wide style when absent. */
+  bold?: boolean;
+  italic?: boolean;
+  underline?: boolean;
 }
 export type BorderStyle = "single" | "double";
 export type SizePreset = "small" | "medium" | "large" | "custom";
