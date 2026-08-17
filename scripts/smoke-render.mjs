@@ -266,6 +266,32 @@ add(
   },
   RECT_REGIONS
 );
+add(
+  "custom stretched letter spacing",
+  {
+    ...customBase,
+    shape: "rectangle",
+    widthPts: 230,
+    textBlocks: mkBlocks([
+      ["OFFICIAL", 20, 30, "center", { spacing: 6 }],
+      ["SEAL OF OFFICE", 12, 70, "center", { spacing: 2, bold: false }],
+    ]),
+  },
+  [
+    { x0: 0.2, y0: 0.02, x1: 0.8, y1: 0.1, min: 30 }, // top border (tall stamp: border sits at ~4% height)
+    { x0: 0.15, y0: 0.2, x1: 0.85, y1: 0.55, min: 15 }, // upper text band
+  ]
+);
+add(
+  "custom condensed letter spacing",
+  {
+    ...customBase,
+    shape: "rounded",
+    widthPts: 160,
+    textBlocks: mkBlocks([["COPY", 24, 50, "center", { spacing: -3 }]]),
+  },
+  RECT_REGIONS
+);
 
 console.log("Rendering + probing…");
 const rendered = [];

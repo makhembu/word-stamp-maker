@@ -244,6 +244,7 @@ function addBlockRow(block?: Partial<TextBlock>): void {
   const bold = block?.bold ?? true;
   const italic = block?.italic ?? false;
   const underline = block?.underline ?? false;
+  const spacing = block?.spacing ?? 0;
   row.innerHTML = `
     <div class="row">
       <input type="text" class="block-text" maxlength="48" placeholder="Text…" value="${escapeAttr(block?.text ?? "")}" />
@@ -253,9 +254,13 @@ function addBlockRow(block?: Partial<TextBlock>): void {
       <button type="button" class="block-del" title="Remove this text">✕</button>
     </div>
     <div class="row block-opts">
-      <div class="field" style="flex:0 0 72px">
+      <div class="field" style="flex:0 0 62px">
         <label>Size</label>
         <input type="number" class="block-size" min="6" max="96" value="${size}" />
+      </div>
+      <div class="field" style="flex:0 0 82px">
+        <label>Spacing <span class="hint">pt</span></label>
+        <input type="number" class="block-spacing" min="-6" max="16" step="0.5" value="${spacing}" title="Letter spacing between characters, in points. Negative condenses." />
       </div>
       <div class="field" style="flex:1">
         <label>Y position</label>
@@ -270,6 +275,7 @@ function addBlockRow(block?: Partial<TextBlock>): void {
     </div>`;
   row.querySelector(".block-text")!.addEventListener("input", schedulePreview);
   row.querySelector(".block-size")!.addEventListener("input", schedulePreview);
+  row.querySelector(".block-spacing")!.addEventListener("input", schedulePreview);
   for (const cls of [".block-bold", ".block-italic", ".block-underline"]) {
     row.querySelector(cls)!.addEventListener("change", schedulePreview);
   }
@@ -317,6 +323,7 @@ function blocksFromUI(): TextBlock[] {
       bold: (row.querySelector(".block-bold") as HTMLInputElement).checked,
       italic: (row.querySelector(".block-italic") as HTMLInputElement).checked,
       underline: (row.querySelector(".block-underline") as HTMLInputElement).checked,
+      spacing: Math.min(16, Math.max(-6, parseFloat((row.querySelector(".block-spacing") as HTMLInputElement).value) || 0)),
     });
   }
   return out;
@@ -624,6 +631,7 @@ function loadParamsIntoUI(p: StampParams): void {
       bold: b.bold ?? p.bold,
       italic: b.italic ?? p.italic,
       underline: b.underline ?? p.underline,
+      spacing: b.spacing ?? 0,
     }));
     renderBlockRows(blocks);
   }

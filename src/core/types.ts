@@ -30,6 +30,8 @@ export interface TextBlock {
   bold?: boolean;
   italic?: boolean;
   underline?: boolean;
+  /** Extra letter spacing in points between characters (negative condenses). */
+  spacing?: number;
 }
 export type BorderStyle = "single" | "double";
 export type SizePreset = "small" | "medium" | "large" | "custom";

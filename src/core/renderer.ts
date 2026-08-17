@@ -310,6 +310,43 @@ function drawCustomBorder(
   }
 }
 
+/** Width of `text` at the current font with extra per-character spacing (px). */
+function measureSpaced(ctx: CanvasRenderingContext2D, text: string, spacingPx: number): number {
+  let w = 0;
+  for (const ch of text) w += ctx.measureText(ch).width;
+  return w + spacingPx * Math.max(0, text.length - 1);
+}
+
+/** Draw text with per-character letter spacing (spacingPx added between characters). */
+function fillTextSpaced(
+  ctx: CanvasRenderingContext2D,
+  text: string,
+  x: number,
+  y: number,
+  color: string,
+  align: "center" | "left" | "right",
+  underline: boolean,
+  size: number,
+  spacingPx: number
+): void {
+  const chars = [...text];
+  const widths = chars.map((ch) => ctx.measureText(ch).width);
+  const total = widths.reduce((s, w) => s + w, 0) + spacingPx * Math.max(0, chars.length - 1);
+  const startX = align === "center" ? x - total / 2 : align === "left" ? x : x - total;
+  ctx.fillStyle = color;
+  ctx.textAlign = "left";
+  ctx.textBaseline = "middle";
+  let cx = startX;
+  for (let i = 0; i < chars.length; i++) {
+    ctx.fillText(chars[i], cx, y);
+    cx += widths[i] + spacingPx;
+  }
+  if (underline) {
+    const thickness = Math.max(1.5, size * 0.07);
+    ctx.fillRect(startX, y + size * 0.4, total, thickness);
+  }
+}
+
 /** Height (pt) for a custom text-block stamp: adapts to the lowest text block, but never
  *  below the shape's natural minimum aspect. Circle shapes are always square. */
 function customHeightPts(p: StampParams): number {
@@ -364,13 +401,24 @@ function renderCustomStamp(
 
   for (const { b, y } of positioned) {
     const desired = b.size * SCALE;
-    const size = Math.min(desired, fitFontSize(ctx, b.text, maxW, desired, 6 * SCALE));
     // Per-block style wins; otherwise fall back to the stamp-wide style.
     const bold = b.bold ?? p.bold;
     const italic = b.italic ?? p.italic;
     const underline = b.underline ?? p.underline;
+    const spacingPx = (b.spacing ?? 0) * SCALE;
+    // Fit the unspaced measure first, then shrink further if letter spacing overflows.
+    let size = Math.min(desired, fitFontSize(ctx, b.text, maxW, desired, 6 * SCALE));
+    if (spacingPx !== 0) {
+      setFont(ctx, p.fontFamily, size, bold, italic);
+      while (size > 6 * SCALE && measureSpaced(ctx, b.text, spacingPx) > maxW) {
+        size -= SCALE * 0.5;
+        setFont(ctx, p.fontFamily, size, bold, italic);
+      }
+    }
     setFont(ctx, p.fontFamily, size, bold, italic);
-    if (b.align === "center") {
+    if (spacingPx !== 0) {
+      fillTextSpaced(ctx, b.text, b.align === "center" ? W / 2 : b.align === "left" ? pad * 1.7 : W - pad * 1.7, y, ink, b.align, underline, size, spacingPx);
+    } else if (b.align === "center") {
       fillTextStyled(ctx, b.text, W / 2, y, ink, "center", underline, size);
     } else {
       const edge = b.align === "left" ? pad * 1.7 : W - pad * 1.7;

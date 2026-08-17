@@ -165,9 +165,10 @@ edit, duplicate, and delete the stamps this add-in created.
    - pick the outline **shape**: rectangle, rounded rectangle, circle, double circle,
      ellipse, diamond, hexagon, or octagon;
    - add **any number of text lines**, each with its own size, vertical position (0–96%),
-     alignment, and bold/italic/underline — so you can build e.g. a two-line office stamp,
-     a centered seal with small text around it, or a bordered box with text at the top and
-     bottom, each line styled independently;
+     alignment, bold/italic/underline, and **letter spacing** (stretch or condense, in
+     points — the classic official-seal look) — so you can build e.g. a two-line office
+     stamp, a centered seal with small text around it, or a bordered box with text at the
+     top and bottom, each line styled independently;
    - tick **"Wavy divider line"** to separate lines, and save the whole design with
      **💾 Save design** — saved designs appear in the gallery (dashed chips) and in the
      custom section, ready to load, edit, and delete anytime (stored on this machine).
