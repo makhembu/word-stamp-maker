@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Stamp Maker</title>
+  <script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script>
+  <style>
+    :root {
+      --ink: #1f2430;
+      --muted: #6b7280;
+      --line: #e5e7eb;
+      --bg: #f7f8fa;
+      --panel: #ffffff;
+      --accent: #c62828;
+      --accent-dark: #9e1f1f;
+      --ok: #1e7a3c;
+      --radius: 10px;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; height: 100%; }
+    body {
+      font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+      font-size: 13px;
+      line-height: 1.4;
+    }
+    #app { display: flex; flex-direction: column; height: 100vh; }
+
+    header {
+      background: var(--panel);
+      border-bottom: 1px solid var(--line);
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    header .mark {
+      width: 30px; height: 30px; border-radius: 50%;
+      border: 3px solid var(--accent);
+      box-shadow: inset 0 0 0 2px var(--accent);
+      background: rgba(198, 40, 40, 0.08);
+      flex-shrink: 0;
+    }
+    header h1 { font-size: 15px; margin: 0; font-weight: 700; letter-spacing: 0.3px; }
+    header p { margin: 0; font-size: 11px; color: var(--muted); }
+
+    nav.tabs {
+      display: flex;
+      background: var(--panel);
+      border-bottom: 1px solid var(--line);
+      padding: 0 8px;
+    }
+    nav.tabs button {
+      flex: 1;
+      border: none;
+      background: transparent;
+      padding: 9px 4px;
+      font-size: 12.5px;
+      font-weight: 600;
+      color: var(--muted);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+    }
+    nav.tabs button.active { color: var(--ink); border-bottom-color: var(--accent); }
+    nav.tabs button:hover { color: var(--ink); }
+
+    main { flex: 1; overflow-y: auto; padding: 12px 14px 20px; }
+
+    .section-label {
+      font-size: 10.5px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.7px; color: var(--muted); margin: 14px 0 6px;
+    }
+    .section-label:first-child { margin-top: 0; }
+
+    /* template gallery */
+    #templateGrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+    #templateGrid button {
+      border: 1px solid var(--line);
+      background: var(--panel);
+      border-radius: 8px;
+      padding: 8px 2px;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      color: var(--ink);
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      transition: border-color 0.12s, background 0.12s, transform 0.05s;
+    }
+    #templateGrid button:hover { border-color: #c9cdd4; }
+    #templateGrid button.active {
+      border-color: var(--accent);
+      background: rgba(198, 40, 40, 0.07);
+      box-shadow: 0 0 0 1px var(--accent);
+    }
+
+    .field { margin: 10px 0; }
+    .field label { display: block; font-size: 11.5px; font-weight: 600; color: var(--ink); margin-bottom: 4px; }
+    .field label .hint { color: var(--muted); font-weight: 400; }
+
+    input[type="text"], input[type="number"], select {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      padding: 7px 9px;
+      font-size: 13px;
+      background: var(--panel);
+      color: var(--ink);
+    }
+    input:focus, select:focus { outline: 2px solid rgba(198, 40, 40, 0.35); border-color: var(--accent); }
+
+    .row { display: flex; gap: 8px; align-items: center; }
+    .row > * { flex: 1; min-width: 0; }
+    .check { display: flex; align-items: center; gap: 6px; font-size: 12.5px; cursor: pointer; user-select: none; }
+    .check input { width: auto; }
+
+    #colorSwatches { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+    .swatch {
+      width: 26px; height: 26px; border-radius: 50%;
+      border: 2px solid #fff;
+      box-shadow: 0 0 0 1px var(--line);
+      cursor: pointer;
+      transition: transform 0.08s;
+    }
+    .swatch:hover { transform: scale(1.12); }
+    .swatch.active { box-shadow: 0 0 0 2px var(--ink); }
+    .custom-color-wrap { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--muted); }
+    .custom-color-wrap input[type="color"] { width: 34px; height: 26px; border: none; padding: 0; background: none; cursor: pointer; }
+
+    .range-row { display: flex; align-items: center; gap: 10px; }
+    .range-row input[type="range"] { flex: 1; accent-color: var(--accent); }
+    .range-row output { font-size: 12px; font-weight: 600; min-width: 34px; text-align: right; }
+
+    /* preview */
+    #previewWrap {
+      background: repeating-linear-gradient(45deg, #f1f2f4 0 10px, #eceef1 10px 20px);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 160px;
+      overflow: hidden;
+    }
+    #previewWrap canvas {
+      max-width: 100%;
+      height: auto;
+      filter: drop-shadow(0 2px 5px rgba(0,0,0,0.18));
+    }
+
+    /* position chips */
+    #posChips { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; }
+    #posChips button {
+      border: 1px solid var(--line);
+      background: var(--panel);
+      border-radius: 7px;
+      padding: 7px 0;
+      font-size: 12px;
+      cursor: pointer;
+      color: var(--ink);
+    }
+    #posChips button:hover { border-color: #c9cdd4; }
+    #posChips button.active { border-color: var(--accent); background: rgba(198, 40, 40, 0.07); box-shadow: 0 0 0 1px var(--accent); }
+
+    .primary-btn {
+      width: 100%;
+      margin-top: 14px;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 9px;
+      padding: 12px;
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0.6px;
+      cursor: pointer;
+      text-transform: uppercase;
+      transition: background 0.12s;
+    }
+    .primary-btn:hover { background: var(--accent-dark); }
+    .primary-btn:disabled { background: #c9cdd4; cursor: not-allowed; }
+
+    .edit-banner {
+      display: flex; align-items: center; gap: 8px;
+      background: #fff8e1; border: 1px solid #f2d26b;
+      border-radius: 8px; padding: 8px 10px; margin-top: 10px;
+      font-size: 12px;
+    }
+    .edit-banner button {
+      margin-left: auto; border: none; background: transparent;
+      color: var(--accent); font-weight: 600; cursor: pointer; font-size: 12px;
+    }
+
+    /* manage tab */
+    .toolbar { display: flex; gap: 8px; margin-bottom: 10px; }
+    .toolbar button {
+      border: 1px solid var(--line); background: var(--panel);
+      border-radius: 7px; padding: 7px 12px; font-size: 12.5px; font-weight: 600;
+      cursor: pointer; color: var(--ink);
+    }
+    .toolbar button:hover { border-color: #c9cdd4; }
+    .stamp-row {
+      background: var(--panel); border: 1px solid var(--line);
+      border-radius: 9px; padding: 10px 12px; margin-bottom: 8px;
+    }
+    .stamp-row .name { font-weight: 700; font-size: 13px; text-transform: uppercase; }
+    .stamp-row .meta { font-size: 11.5px; color: var(--muted); margin: 3px 0 8px; }
+    .stamp-row .actions { display: flex; gap: 6px; }
+    .stamp-row .actions button {
+      flex: 1; border: 1px solid var(--line); background: #fff;
+      border-radius: 6px; padding: 6px 0; font-size: 12px; cursor: pointer;
+    }
+    .stamp-row .actions button:hover { border-color: var(--accent); color: var(--accent); }
+    .badge {
+      display: inline-block; font-size: 10px; font-weight: 700;
+      border-radius: 4px; padding: 2px 6px; margin-left: 4px;
+      background: rgba(30, 122, 60, 0.12); color: var(--ok);
+    }
+    .empty {
+      text-align: center; color: var(--muted); padding: 34px 10px;
+      border: 1px dashed #d3d7de; border-radius: var(--radius);
+      font-size: 12.5px;
+    }
+    .empty strong { display: block; color: var(--ink); font-size: 13.5px; margin-bottom: 4px; }
+
+    /* tests tab */
+    .note {
+      background: #eef4ff; border: 1px solid #c7d9f7; border-radius: 8px;
+      padding: 9px 11px; font-size: 12px; color: #24407c; margin-bottom: 10px;
+    }
+    .test-result {
+      background: var(--panel); border: 1px solid var(--line);
+      border-radius: 8px; padding: 9px 11px; margin-bottom: 7px; font-size: 12.5px;
+    }
+    .test-result.pass { border-left: 4px solid var(--ok); }
+    .test-result.fail { border-left: 4px solid var(--accent); }
+    .test-result .tname { font-weight: 700; }
+    .test-result .tdetail { color: var(--muted); font-size: 11.5px; margin-top: 2px; }
+
+    #toast {
+      position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%);
+      background: var(--ink); color: #fff; border-radius: 8px;
+      padding: 9px 16px; font-size: 12.5px; box-shadow: 0 4px 14px rgba(0,0,0,0.25);
+      z-index: 50; max-width: 90%;
+    }
+    #toast.error { background: var(--accent); }
+
+    .unsupported {
+      text-align: center; padding: 40px 16px; color: var(--ink);
+    }
+    .unsupported h2 { font-size: 16px; }
+    .unsupported p { color: var(--muted); font-size: 13px; }
+    [hidden] { display: none !important; }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <header>
+      <div class="mark"></div>
+      <div>
+        <h1>Stamp Maker</h1>
+        <p>Floating overlay stamps · never pushes text</p>
+      </div>
+    </header>
+
+    <nav class="tabs">
+      <button id="tabBtn-design" class="active" data-tab="design">Design</button>
+      <button id="tabBtn-manage" data-tab="manage">Stamps</button>
+      <button id="tabBtn-tests" data-tab="tests">Test</button>
+    </nav>
+
+    <main>
+      <!-- Unsupported host -->
+      <section id="unsupported" hidden>
+        <div class="unsupported">
+          <h2>Shape API not available</h2>
+          <p>Stamp Maker needs the Word Shape API, which is only available in the
+             <strong>Word desktop app</strong> (Microsoft 365, Windows or Mac).
+             It is not available in Word on the web.</p>
+          <p>Please open this document in the Word desktop app and reload the add-in.</p>
+        </div>
+      </section>
+
+      <!-- Design -->
+      <section id="tab-design">
+        <div class="section-label">Choose a design</div>
+        <div id="templateGrid"></div>
+
+        <div class="section-label">Text</div>
+        <div class="field">
+          <label for="mainText">Stamp text</label>
+          <input type="text" id="mainText" maxlength="48" />
+        </div>
+        <div class="field" id="secondLineField" hidden>
+          <label for="secondLine">Second line</label>
+          <input type="text" id="secondLine" maxlength="48" />
+        </div>
+        <div class="field" id="secondLineSizeField" hidden>
+          <label for="secondLineSize">Second line size</label>
+          <input type="number" id="secondLineSize" min="6" max="60" value="11" />
+        </div>
+        <div class="row" id="dateRow" hidden>
+          <label class="check"><input type="checkbox" id="addDate" /> Add date</label>
+          <input type="text" id="dateText" placeholder="17 AUG 2026" />
+        </div>
+        <div class="field" id="refField" hidden>
+          <label for="refText">Reference / number</label>
+          <input type="text" id="refText" maxlength="24" />
+        </div>
+        <div class="field" id="deptField" hidden>
+          <label for="deptText">Department / office</label>
+          <input type="text" id="deptText" maxlength="28" />
+        </div>
+        <div class="field" id="nameField" hidden>
+          <label for="nameText">Name / signatory</label>
+          <input type="text" id="nameText" maxlength="28" />
+        </div>
+
+        <div class="section-label">Style</div>
+        <div class="field" id="shapeField" hidden>
+          <label for="shapeSelect">Shape</label>
+          <select id="shapeSelect"></select>
+        </div>
+        <div class="field">
+          <label>Ink color</label>
+          <div id="colorSwatches"></div>
+          <div class="custom-color-wrap" style="margin-top:6px">
+            <input type="color" id="customColor" />
+            <span>Custom</span>
+          </div>
+        </div>
+        <div class="row" style="margin:10px 0">
+          <div class="field" style="margin:0">
+            <label for="sizePreset">Size</label>
+            <select id="sizePreset">
+              <option value="small">Small</option>
+              <option value="medium" selected>Medium</option>
+              <option value="large">Large</option>
+              <option value="custom">Custom…</option>
+            </select>
+          </div>
+          <div class="field" style="margin:0" id="customWidthField" hidden>
+            <label for="customWidth">Width (pt)</label>
+            <input type="number" id="customWidth" min="60" max="420" value="180" />
+          </div>
+        </div>
+        <div class="row" style="margin:10px 0">
+          <div class="field" style="margin:0">
+            <label for="fontFamily">Font</label>
+            <select id="fontFamily"></select>
+          </div>
+          <div class="field" style="margin:0">
+            <label for="fontSize">Main text size</label>
+            <input type="number" id="fontSize" min="8" max="72" value="18" />
+          </div>
+        </div>
+        <div class="row" style="margin:10px 0">
+          <div class="field" style="margin:0">
+            <label>Format</label>
+            <div class="row">
+              <label class="check"><input type="checkbox" id="boldChk" checked /> B</label>
+              <label class="check"><input type="checkbox" id="italicChk" /> I</label>
+              <label class="check"><input type="checkbox" id="underlineChk" /> U</label>
+              <select id="alignSelect" style="flex:1.4">
+                <option value="center" selected>Center</option>
+                <option value="left">Left</option>
+                <option value="right">Right</option>
+              </select>
+            </div>
+          </div>
+          <div class="field" style="margin:0">
+            <label for="borderStyle">Border</label>
+            <select id="borderStyle">
+              <option value="single">Single</option>
+              <option value="double">Double</option>
+            </select>
+          </div>
+        </div>
+        <div class="field">
+          <label>Border thickness</label>
+          <div class="row">
+            <select id="borderThickness">
+              <option value="0.7">Thin</option>
+              <option value="1" selected>Normal</option>
+              <option value="1.6">Thick</option>
+            </select>
+            <label class="check"><input type="checkbox" id="randomTilt" /> Random tilt</label>
+          </div>
+        </div>
+        <div class="field">
+          <label for="opacityRange">Opacity <span class="hint" id="opacityVal">92%</span></label>
+          <div class="range-row">
+            <input type="range" id="opacityRange" min="15" max="100" value="92" />
+          </div>
+        </div>
+        <div class="field" id="dividerField">
+          <label class="check"><input type="checkbox" id="dividerChk" /> Wavy divider line between text lines</label>
+        </div>
+        <div class="field">
+          <label for="rotationNum">Rotation (degrees)</label>
+          <input type="number" id="rotationNum" min="-180" max="180" value="0" />
+        </div>
+
+        <div class="section-label">Preview</div>
+        <div id="previewWrap">
+          <canvas id="preview" width="200" height="120"></canvas>
+        </div>
+
+        <div class="section-label">Position</div>
+        <div id="posChips"></div>
+
+        <div id="editBanner" class="edit-banner" hidden>
+          <span id="editBannerText">Updating stamp…</span>
+          <button id="cancelEditBtn">Cancel</button>
+        </div>
+
+        <button id="insertBtn" class="primary-btn">INSERT STAMP</button>
+      </section>
+
+      <!-- Manage -->
+      <section id="tab-manage" hidden>
+        <div class="toolbar">
+          <button id="refreshBtn">↻ Refresh</button>
+        </div>
+        <div id="stampList"></div>
+        <div id="manageEmpty" class="empty">
+          <strong>No stamps in this document yet</strong>
+          Go to the Design tab to create your first stamp.
+        </div>
+      </section>
+
+      <!-- Tests -->
+      <section id="tab-tests" hidden>
+        <div class="note">
+          Runs automated checks <strong>inside this Word document</strong>: it inserts test
+          stamps over paragraphs, tables, and a long document, and verifies the surrounding
+          content never moves (no reflow). Any test stamps and scaffolding are removed
+          afterwards. Use a scratch document if you prefer.
+        </div>
+        <div class="toolbar">
+          <button id="runTestsBtn">▶ Run test suite</button>
+        </div>
+        <div id="testResults"></div>
+      </section>
+    </main>
+
+    <div id="toast" hidden></div>
+  </div>
+</body>
+</html>

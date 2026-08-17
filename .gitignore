@@ -1,0 +1,9 @@
+node_modules/
+dist/
+.smoke/
+sample-stamps.png
+*.log
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
