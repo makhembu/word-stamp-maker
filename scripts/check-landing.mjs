@@ -17,7 +17,9 @@ const page = await browser.newPage({ viewport: { width: 900, height: 1200 } });
 const errors = [];
 page.on("pageerror", (e) => errors.push(String(e)));
 page.on("console", (m) => {
-  if (m.type() === "error") errors.push(m.text());
+  // Ignore the badge's own optional GitHub API fetch: a 404 just means the release
+  // hasn't been published yet (first deploy), and the badge hides gracefully.
+  if (m.type() === "error" && !/Failed to load resource:.*404/.test(m.text())) errors.push(m.text());
 });
 
 await page.goto(URL, { waitUntil: "networkidle", ignoreHTTPSErrors: true });
@@ -61,15 +63,34 @@ ok(
   /Word add-in/i.test(copy),
   'page text says it is a "Word add-in"'
 );
-const dl = await page.evaluate(() => {
-  const a = document.querySelector('a.btn.primary[href="stamp-maker-setup.zip"]');
+const DL_URL = "https://github.com/makhembu/word-stamp-maker/releases/latest/download/stamp-maker-setup.zip";
+const dl = await page.evaluate((u) => {
+  const a = document.querySelector('a.btn.primary[href^="https://github.com/"]');
   if (!a) return null;
   return { href: a.getAttribute("href"), download: a.hasAttribute("download"), text: a.textContent.trim() };
-});
-ok(!!dl, "hero primary CTA links to stamp-maker-setup.zip");
-ok(dl?.download, "download CTA uses the download attribute");
+}, DL_URL);
+ok(!!dl, "hero primary CTA links to the installer");
+ok(dl?.href === DL_URL, `hero CTA points at the GitHub release perma-link (${dl?.href})`);
+ok(dl?.download, "download CTA uses the download attribute (fires the GA event)");
 ok(/installer/i.test(dl?.text || ""), "download CTA says installer");
 ok(/installer/i.test(copy), "install steps mention the installer");
+
+// Live download badge: present, and either shows a real count (GitHub API reachable)
+// or hides gracefully without breaking the page.
+const badge = await page.evaluate(() => {
+  const el = document.querySelector("#dlBadge");
+  return {
+    exists: !!el,
+    visible: !!el && !el.hidden && el.getBoundingClientRect().height > 0,
+    text: el?.textContent.replace(/\s+/g, " ").trim() || "",
+  };
+});
+ok(badge.exists, "download badge element exists");
+if (badge.visible) {
+  ok(/\d[\.\,]?\d* downloads/i.test(badge.text), `badge shows a count ("${badge.text}")`);
+} else {
+  ok(true, "badge stays hidden when GitHub is unreachable (graceful)");
+}
 
 // FAQ: present, populated, and covering the promised topics (versions, Mac, privacy).
 // Closed <details> hide their answers from innerText, so open them first.

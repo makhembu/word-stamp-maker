@@ -138,6 +138,13 @@ after `npm run build`), a download-only zip for regular users:
 * **`README-SETUP.txt`** — plain-language guide with troubleshooting and uninstall steps.
 * **`manifest.xml`** — kept in the zip only as a manual fallback.
 
+The Pages workflow also publishes the zip as a rolling **GitHub Release** (tag
+`installer-latest`) whose public `download_count` feeds the live **downloads badge** on
+the landing page via the GitHub API — no third-party counter service involved, and the
+count reflects real downloads of the actual artifact. The Download buttons point at the
+release perma-link
+(`https://github.com/<owner>/<repo>/releases/latest/download/stamp-maker-setup.zip`).
+
 Manual fallback (no installer):
 
 * **Windows Word desktop:** *Insert → Add-ins → My Add-ins → Upload My Add-in* → pick

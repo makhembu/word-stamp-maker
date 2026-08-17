@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write   # publishing the installer zip as a release asset (powers the download badge)
   pages: write
   id-token: write
 
@@ -56,6 +56,21 @@ jobs:
           cd dist
           chmod +x setup/install-mac.command
           zip -r stamp-maker-setup.zip setup
+
+      - name: Publish installer zip as a release asset
+        # One rolling release (tag installer-latest) holds the zip. Its public
+        # download_count feeds the live badge on the landing page via the GitHub
+        # API (no auth, CORS-enabled), so the badge shows REAL downloads.
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: installer-latest
+          name: Latest installer
+          body: |
+            One-click installer for **Stamp Maker**, the Microsoft Word add-in.
+            This release is updated automatically on every deploy; the download
+            count powers the badge on the landing page.
+          files: dist/stamp-maker-setup.zip
+          fail_on_unmatched_files: true
 
       - name: Configure Pages
         uses: actions/configure-pages@v5
