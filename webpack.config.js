@@ -80,6 +80,32 @@ module.exports = async (env, argv) => {
           });
         },
       },
+      // Emit dist/sitemap.xml at the site root so Google Search Console has a sitemap
+      // to point at (Sitemaps -> sitemap.xml).
+      {
+        apply(compiler) {
+          compiler.hooks.emit.tapAsync("StampMakerSitemap", (compilation, callback) => {
+            try {
+              const xml =
+                `<?xml version="1.0" encoding="UTF-8"?>\n` +
+                `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n` +
+                `  <url>\n` +
+                `    <loc>${BASE_URL}/</loc>\n` +
+                `    <changefreq>weekly</changefreq>\n` +
+                `    <priority>1.0</priority>\n` +
+                `  </url>\n` +
+                `</urlset>\n`;
+              compilation.assets["sitemap.xml"] = {
+                source: () => xml,
+                size: () => Buffer.byteLength(xml),
+              };
+            } catch (err) {
+              compilation.errors.push(new Error(`Failed to emit sitemap.xml: ${err.message}`));
+            }
+            callback();
+          });
+        },
+      },
     ],
     devServer: {
       host: HOST,
