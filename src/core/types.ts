@@ -5,12 +5,28 @@ export type StampShapeKind =
   | "double-circle"
   | "rectangle"
   | "rounded"
+  | "ellipse"
+  | "diamond"
+  | "hexagon"
+  | "octagon"
   | "diagonal"
   | "seal"
   | "signature"
   | "date";
 
 export type TextAlign = "center" | "left" | "right";
+
+/** One freely-placed text element inside a custom stamp. `y` is the vertical position of
+ *  the line's center as a percentage (0–100) of the stamp's content height. */
+export interface TextBlock {
+  id: string;
+  text: string;
+  /** Font size in points for this block. */
+  size: number;
+  /** 0–100, percent of content height from the top. */
+  y: number;
+  align: TextAlign;
+}
 export type BorderStyle = "single" | "double";
 export type SizePreset = "small" | "medium" | "large" | "custom";
 
@@ -55,6 +71,9 @@ export interface StampParams {
   aspect: number;
   /** Draw the classic wavy divider line above lower fields (rect-style stamps). */
   divider: boolean;
+  /** Custom stamps only: freely placed text elements. When present, the stamp is drawn
+   *  by the generic custom renderer using `shape` as its outline. */
+  textBlocks?: TextBlock[];
 }
 
 /** Size of the rendered stamp, in Word points. */

@@ -39,15 +39,16 @@ export const TEMPLATES: TemplateDef[] = [
   { id: "custom", label: "CUSTOM", shape: "rectangle", defaultText: "CUSTOM TEXT", defaultColor: "#37474F", defaultRotation: 0, defaultWidthPts: 170, supportsSecondLine: true, supportsDate: true, supportsRef: true, supportsDept: true, supportsName: true, divider: false, aspect: 0.46 },
 ];
 
-export const SHAPE_OPTIONS: { value: StampShapeKind; label: string }[] = [
-  { value: "circle", label: "Circle" },
-  { value: "double-circle", label: "Double circle" },
+/** Outline shapes available to the CUSTOM builder. Text is placed freely on the shape. */
+export const CUSTOM_SHAPES: { value: StampShapeKind; label: string }[] = [
   { value: "rectangle", label: "Rectangle" },
   { value: "rounded", label: "Rounded rectangle" },
-  { value: "diagonal", label: "Diagonal text" },
-  { value: "seal", label: "Official seal" },
-  { value: "signature", label: "Signature" },
-  { value: "date", label: "Date stamp" },
+  { value: "circle", label: "Circle" },
+  { value: "double-circle", label: "Double circle" },
+  { value: "ellipse", label: "Ellipse" },
+  { value: "diamond", label: "Diamond" },
+  { value: "hexagon", label: "Hexagon" },
+  { value: "octagon", label: "Octagon" },
 ];
 
 export const INK_COLORS: { name: string; hex: string }[] = [
@@ -91,6 +92,14 @@ export function aspectForShape(shape: StampShapeKind): number {
       return 0.42;
     case "rounded":
       return 0.44;
+    case "ellipse":
+      return 0.6;
+    case "diamond":
+      return 0.55;
+    case "hexagon":
+      return 0.55;
+    case "octagon":
+      return 0.55;
     case "signature":
       return 0.46;
     case "date":

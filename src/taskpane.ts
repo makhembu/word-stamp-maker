@@ -1,9 +1,9 @@
 // Stamp Maker task pane entry point.
 
 import {
+  CUSTOM_SHAPES,
   FONT_OPTIONS,
   INK_COLORS,
-  SHAPE_OPTIONS,
   SIZE_PRESETS,
   TEMPLATES,
   aspectForShape,
@@ -18,7 +18,9 @@ import {
   listStamps,
   selectStamp,
 } from "./core/document";
-import type { QuickPosition, StampParams, StampRecord } from "./core/types";
+import { deleteSavedDesign, loadSavedDesigns, saveDesign } from "./core/saved";
+import type { SavedDesign } from "./core/saved";
+import type { QuickPosition, StampParams, StampRecord, TextAlign, TextBlock } from "./core/types";
 import { runTestSuite } from "./test/suite";
 
 // ---------- DOM helpers ----------
@@ -62,6 +64,17 @@ function buildTemplateGrid(): void {
     btn.addEventListener("click", () => selectTemplate(t.id));
     grid.appendChild(btn);
   }
+  // Saved custom designs appear in the gallery too, as first-class templates.
+  for (const d of loadSavedDesigns()) {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.textContent = d.name;
+    btn.dataset.saved = d.id;
+    btn.title = "Saved design";
+    btn.classList.add("saved-chip-btn");
+    btn.addEventListener("click", () => loadSavedIntoUI(d));
+    grid.appendChild(btn);
+  }
 }
 
 function buildSwatches(): void {
@@ -97,7 +110,7 @@ function selectSwatch(hex: string): void {
 function buildShapeSelect(): void {
   const sel = $("shapeSelect") as HTMLSelectElement;
   sel.innerHTML = "";
-  for (const o of SHAPE_OPTIONS) {
+  for (const o of CUSTOM_SHAPES) {
     const opt = document.createElement("option");
     opt.value = o.value;
     opt.textContent = o.label;
@@ -159,6 +172,10 @@ function selectTemplate(id: string): void {
     b.classList.toggle("active", b.dataset.template === id);
   });
 
+  if (tpl.id === "custom") {
+    initCustomBlocks();
+  }
+
   const d = defaultsFor(tpl);
   ($("mainText") as HTMLInputElement).value = d.mainText;
   ($("secondLine") as HTMLInputElement).value = "";
@@ -194,14 +211,144 @@ function selectTemplate(id: string): void {
 }
 
 function applyFieldVisibility(tpl: { supportsSecondLine: boolean; supportsDate: boolean; supportsRef: boolean; supportsDept: boolean; supportsName: boolean; id: string }): void {
+  const isCustom = tpl.id === "custom";
+  $("legacyTextSection").hidden = isCustom;
+  $("customTextSection").hidden = !isCustom;
   $("secondLineField").hidden = !tpl.supportsSecondLine;
   $("secondLineSizeField").hidden = !tpl.supportsSecondLine;
   $("dateRow").hidden = !tpl.supportsDate;
   $("refField").hidden = !tpl.supportsRef;
   $("deptField").hidden = !tpl.supportsDept;
   $("nameField").hidden = !tpl.supportsName;
-  $("shapeField").hidden = tpl.id !== "custom";
-  $("dividerField").hidden = !(tpl.supportsSecondLine || tpl.supportsDate || tpl.supportsRef || tpl.supportsDept || tpl.supportsName);
+  $("shapeField").hidden = !isCustom;
+  $("fontSizeField").hidden = isCustom;
+  $("alignField").hidden = isCustom;
+  $("dividerField").hidden = isCustom
+    ? false
+    : !(tpl.supportsSecondLine || tpl.supportsDate || tpl.supportsRef || tpl.supportsDept || tpl.supportsName);
+}
+
+// ---------- Custom text blocks ----------
+function escapeAttr(s: string): string {
+  return s.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
+}
+
+function addBlockRow(block?: Partial<TextBlock>): void {
+  const list = $("textBlocksList");
+  const row = document.createElement("div");
+  row.className = "block-row";
+  const size = block?.size ?? 18;
+  const y = block?.y ?? 40;
+  const align = block?.align ?? "center";
+  row.innerHTML = `
+    <div class="row">
+      <input type="text" class="block-text" maxlength="48" placeholder="Text…" value="${escapeAttr(block?.text ?? "")}" />
+      <button type="button" class="block-del" title="Remove this text">✕</button>
+    </div>
+    <div class="row block-opts">
+      <div class="field" style="flex:0 0 72px">
+        <label>Size</label>
+        <input type="number" class="block-size" min="6" max="96" value="${size}" />
+      </div>
+      <div class="field" style="flex:1">
+        <label>Y position</label>
+        <input type="range" class="block-y" min="0" max="96" value="${y}" />
+      </div>
+      <span class="yval">${y}%</span>
+      <select class="block-align">
+        <option value="center">Center</option>
+        <option value="left"${align === "left" ? " selected" : ""}>Left</option>
+        <option value="right"${align === "right" ? " selected" : ""}>Right</option>
+      </select>
+    </div>`;
+  row.querySelector(".block-text")!.addEventListener("input", schedulePreview);
+  row.querySelector(".block-size")!.addEventListener("input", schedulePreview);
+  const yRange = row.querySelector(".block-y") as HTMLInputElement;
+  const yVal = row.querySelector(".yval") as HTMLElement;
+  yRange.addEventListener("input", () => {
+    yVal.textContent = `${yRange.value}%`;
+    schedulePreview();
+  });
+  row.querySelector(".block-align")!.addEventListener("change", schedulePreview);
+  row.querySelector(".block-del")!.addEventListener("click", () => {
+    row.remove();
+    schedulePreview();
+  });
+  list.appendChild(row);
+}
+
+function renderBlockRows(blocks: TextBlock[]): void {
+  const list = $("textBlocksList");
+  list.innerHTML = "";
+  for (const b of blocks) addBlockRow(b);
+}
+
+/** Reset the custom text-block editor from the current main/second line fields. */
+function initCustomBlocks(): void {
+  const main = val("mainText").trim() || "STAMP";
+  const second = val("secondLine").trim();
+  const blocks: TextBlock[] = [{ id: "b0", text: main, size: 18, y: 35, align: "center" }];
+  if (second) blocks.push({ id: "b1", text: second, size: 13, y: 70, align: "center" });
+  renderBlockRows(blocks);
+}
+
+function blocksFromUI(): TextBlock[] {
+  const out: TextBlock[] = [];
+  const rows = Array.from($("textBlocksList").querySelectorAll<HTMLElement>(".block-row"));
+  for (const row of rows) {
+    const text = (row.querySelector(".block-text") as HTMLInputElement).value.trim();
+    if (!text) continue;
+    out.push({
+      id: "b" + out.length,
+      text,
+      size: Math.min(96, Math.max(6, parseInt((row.querySelector(".block-size") as HTMLInputElement).value, 10) || 18)),
+      y: Math.min(96, Math.max(0, parseInt((row.querySelector(".block-y") as HTMLInputElement).value, 10) || 40)),
+      align: (row.querySelector(".block-align") as HTMLSelectElement).value as TextAlign,
+    });
+  }
+  return out;
+}
+
+// ---------- Saved designs ----------
+function refreshSavedDesigns(): void {
+  const wrap = $("savedDesigns");
+  wrap.innerHTML = "";
+  for (const d of loadSavedDesigns()) {
+    const chip = document.createElement("div");
+    chip.className = "saved-chip";
+    chip.title = "Load this design";
+    const name = document.createElement("span");
+    name.textContent = d.name;
+    name.style.fontWeight = "600";
+    const del = document.createElement("button");
+    del.type = "button";
+    del.className = "del";
+    del.title = "Delete this design";
+    del.textContent = "✕";
+    del.addEventListener("click", (e) => {
+      e.stopPropagation();
+      deleteSavedDesign(d.id);
+      refreshSavedDesigns();
+      buildTemplateGrid();
+      toast("Design deleted");
+    });
+    chip.appendChild(name);
+    chip.appendChild(del);
+    chip.addEventListener("click", () => loadSavedIntoUI(d));
+    wrap.appendChild(chip);
+  }
+}
+
+function loadSavedIntoUI(d: SavedDesign): void {
+  activeTemplateId = "custom";
+  document.querySelectorAll<HTMLElement>("#templateGrid button").forEach((b) => {
+    b.classList.toggle("active", b.dataset.template === "custom" || b.dataset.saved === d.id);
+  });
+  const customTpl = TEMPLATES.find((t) => t.id === "custom")!;
+  loadParamsIntoUI(d.params);
+  applyFieldVisibility(customTpl);
+  ($("tabBtn-design") as HTMLButtonElement).click();
+  toast(`Loaded "${d.name}" ✓`);
 }
 
 // ---------- Params ----------
@@ -216,11 +363,14 @@ function widthFromSizePreset(): number {
 function paramsFromUI(): StampParams {
   const shape = val("shapeSelect") as StampParams["shape"];
   const addDate = ($("addDate") as HTMLInputElement).checked;
-  return {
+  const isCustom = activeTemplateId === "custom";
+  const blocks = isCustom ? blocksFromUI() : [];
+  const mainText = isCustom ? (blocks[0]?.text ?? "STAMP") : val("mainText").trim() || "STAMP";
+  const params: StampParams = {
     templateId: activeTemplateId,
     shape,
-    mainText: val("mainText").trim() || "STAMP",
-    secondLine: val("secondLine").trim(),
+    mainText,
+    secondLine: isCustom ? "" : val("secondLine").trim(),
     dateText: addDate ? val("dateText").trim() || todayText() : "",
     refText: val("refText").trim(),
     deptText: val("deptText").trim(),
@@ -241,6 +391,13 @@ function paramsFromUI(): StampParams {
     aspect: aspectForShape(shape),
     divider: ($("dividerChk") as HTMLInputElement).checked,
   };
+  if (isCustom) {
+    params.textBlocks =
+      blocks.length > 0
+        ? blocks
+        : [{ id: "b0", text: mainText, size: 18, y: 40, align: "center" as const }];
+  }
+  return params;
 }
 
 // ---------- Preview ----------
@@ -435,6 +592,20 @@ function loadParamsIntoUI(p: StampParams): void {
   ($("randomTilt") as HTMLInputElement).checked = false;
   ($("dividerChk") as HTMLInputElement).checked = !!p.divider;
   ($("shapeSelect") as HTMLSelectElement).value = p.shape;
+  // Custom stamps: rebuild the text-block editor from the saved params (or migrate
+  // legacy custom stamps that used the old single second-line fields).
+  if (p.templateId === "custom") {
+    const blocks: TextBlock[] =
+      p.textBlocks && p.textBlocks.length
+        ? p.textBlocks
+        : [
+            { id: "b0", text: p.mainText || "STAMP", size: p.fontSize || 18, y: 35, align: "center" },
+            ...(p.secondLine
+              ? [{ id: "b1", text: p.secondLine, size: p.secondLineSize || 12, y: 70, align: "center" as const }]
+              : []),
+          ];
+    renderBlockRows(blocks);
+  }
   schedulePreview();
 }
 
@@ -543,6 +714,26 @@ function bindEvents(): void {
   $("customColor").addEventListener("input", () => {
     selectSwatch(($("customColor") as HTMLInputElement).value);
   });
+  $("addBlockBtn").addEventListener("click", () => {
+    addBlockRow({ text: "", size: 14, y: 60, align: "center" });
+    schedulePreview();
+  });
+  $("saveDesignBtn").addEventListener("click", () => {
+    const nameInput = $("designName") as HTMLInputElement;
+    const name = nameInput.value.trim();
+    if (!name) {
+      toast("Give the design a name first", true);
+      nameInput.focus();
+      return;
+    }
+    saveDesign(name, paramsFromUI());
+    refreshSavedDesigns();
+    buildTemplateGrid();
+    toast("Design saved ✓");
+  });
+  $("designName").addEventListener("keydown", (e) => {
+    if (e.key === "Enter") ($("saveDesignBtn") as HTMLButtonElement).click();
+  });
   $("insertBtn").addEventListener("click", () => void applyStamp());
   $("cancelEditBtn").addEventListener("click", cancelEdit);
   $("refreshBtn").addEventListener("click", () => void refreshManage());
@@ -567,6 +758,7 @@ function init(): void {
   buildFontSelect();
   buildPosChips();
   bindEvents();
+  refreshSavedDesigns();
   selectTemplate(TEMPLATES[0].id);
   void refreshManage();
 }

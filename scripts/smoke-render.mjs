@@ -170,6 +170,82 @@ add(
   ]
 );
 
+// Custom builder: outline shapes with freely placed text blocks.
+const customBase = defaultsFor(TEMPLATES.find((t) => t.id === "custom"));
+const mkBlocks = (rows) =>
+  rows.map(([text, size, y, align], i) => ({ id: "b" + i, text, size, y, align: align || "center" }));
+add(
+  "custom blocks rectangle",
+  {
+    ...customBase,
+    widthPts: 200,
+    textBlocks: mkBlocks([["RECEIVED BY", 16, 22], ["MAIN OFFICE", 13, 58]]),
+  },
+  RECT_REGIONS
+);
+add(
+  "custom blocks circle",
+  {
+    ...customBase,
+    shape: "circle",
+    widthPts: 160,
+    textBlocks: mkBlocks([["APPROVED", 20, 30], ["BY COMMITTEE", 11, 70]]),
+  },
+  RING_REGIONS
+);
+add(
+  "custom double-circle",
+  {
+    ...customBase,
+    shape: "double-circle",
+    widthPts: 160,
+    borderStyle: "single",
+    textBlocks: mkBlocks([["ORIGINAL", 16, 50]]),
+  },
+  RING_REGIONS
+);
+add(
+  "custom ellipse + divider",
+  {
+    ...customBase,
+    shape: "ellipse",
+    widthPts: 200,
+    divider: true,
+    textBlocks: mkBlocks([["RECEIVED", 16, 30], ["17 AUG 2026", 12, 70]]),
+  },
+  RECT_REGIONS
+);
+add(
+  "custom diamond",
+  {
+    ...customBase,
+    shape: "diamond",
+    widthPts: 180,
+    textBlocks: mkBlocks([["SAMPLE", 18, 50]]),
+  },
+  [{ x0: 0.15, y0: 0.12, x1: 0.85, y1: 0.55, min: 15 }]
+);
+add(
+  "custom hexagon",
+  {
+    ...customBase,
+    shape: "hexagon",
+    widthPts: 180,
+    textBlocks: mkBlocks([["PAID", 20, 50]]),
+  },
+  [{ x0: 0.2, y0: 0.05, x1: 0.8, y1: 0.55, min: 15 }]
+);
+add(
+  "custom octagon",
+  {
+    ...customBase,
+    shape: "octagon",
+    widthPts: 180,
+    textBlocks: mkBlocks([["COPY", 18, 50]]),
+  },
+  [{ x0: 0.2, y0: 0.05, x1: 0.8, y1: 0.55, min: 15 }]
+);
+
 console.log("Rendering + probing…");
 const rendered = [];
 for (const s of suite) {

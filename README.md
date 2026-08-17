@@ -158,16 +158,26 @@ edit, duplicate, and delete the stamps this add-in created.
 
 ### Design tab
 1. **Choose a design** — APPROVED, REJECTED, CONFIDENTIAL, URGENT, PAID, RECEIVED, COPY,
-   ORIGINAL (double circle), DRAFT, OFFICIAL SEAL, DATE, SIGNATURE, DIAGONAL, CUSTOM.
-2. **Text** — stamp text, second line, date (auto-filled with today when "Add date" is
-   checked), reference number, department, name — the fields shown depend on the design.
-3. **Style** — ink color (presets + custom picker), size (Small/Medium/Large/custom width),
-   font, text size, bold/italic, alignment, border style (single/double), border thickness,
-   opacity, rotation (or "Random tilt" for a hand-stamped look).
-4. **Preview** updates live as you type.
-5. **Position** — drop it at the cursor, or use a quick preset: top-left/top-center/top-right,
+   ORIGINAL (double circle), DRAFT, OFFICIAL SEAL, DATE, SIGNATURE, DIAGONAL, and CUSTOM.
+2. **Text** — fixed designs use text, second line, date (auto-filled with today when
+   "Add date" is checked), reference number, department, and name fields as applicable.
+3. **CUSTOM builder** — the real design-your-own tool:
+   - pick the outline **shape**: rectangle, rounded rectangle, circle, double circle,
+     ellipse, diamond, hexagon, or octagon;
+   - add **any number of text lines**, each with its own size, vertical position (0–96%)
+     and alignment — so you can build e.g. a two-line office stamp, a centered seal with
+     small text around it, or a bordered box with text at the top and bottom;
+   - tick **"Wavy divider line"** to separate lines, and save the whole design with
+     **💾 Save design** — saved designs appear in the gallery (dashed chips) and in the
+     custom section, ready to load, edit, and delete anytime (stored on this machine).
+4. **Style** — ink color (presets + custom picker), size (Small/Medium/Large/custom width),
+   font, bold/italic/underline, alignment, border style (single/double), border thickness,
+   opacity, rotation (or "Random tilt" for a hand-stamped look). Text-line sizes are set
+   per block in the custom builder.
+5. **Preview** updates live as you type.
+6. **Position** — drop it at the cursor, or use a quick preset: top-left/top-center/top-right,
    center-left/center/center-right, bottom-left/bottom-center/bottom-right.
-6. **INSERT STAMP**. The new stamp is selected so you can drag/fine-tune it immediately.
+7. **INSERT STAMP**. The new stamp is selected so you can drag/fine-tune it immediately.
 
 ### Stamps tab
 Lists every stamp this add-in created in the open document, with size, rotation, position,

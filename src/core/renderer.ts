@@ -1,7 +1,8 @@
 // Canvas stamp renderer. Draws each stamp at high resolution and returns a PNG data URL
 // plus the stamp's size in Word points so the insertion layer can place it at exact size.
 
-import type { RenderResult, StampParams } from "./types";
+import type { RenderResult, StampParams, StampShapeKind } from "./types";
+import { aspectForShape } from "./templates";
 
 /** Pixels per point — high enough that stamps stay crisp when printed. */
 const SCALE = 6;
@@ -218,10 +219,169 @@ function drawRings(ctx: CanvasRenderingContext2D, cx: number, cy: number, R: num
   }
 }
 
+/** Trace the outline of a custom stamp shape into the current path. */
+function traceShapePath(
+  ctx: CanvasRenderingContext2D,
+  shape: StampShapeKind,
+  cx: number,
+  cy: number,
+  W: number,
+  H: number,
+  inset: number
+): void {
+  const x = inset;
+  const y = inset;
+  const w = W - inset * 2;
+  const h = H - inset * 2;
+  ctx.beginPath();
+  switch (shape) {
+    case "circle":
+    case "double-circle": {
+      ctx.arc(cx, cy, Math.min(w, h) / 2, 0, Math.PI * 2);
+      break;
+    }
+    case "ellipse": {
+      ctx.ellipse(cx, cy, w / 2, h / 2, 0, 0, Math.PI * 2);
+      break;
+    }
+    case "diamond": {
+      ctx.moveTo(cx, y);
+      ctx.lineTo(x + w, cy);
+      ctx.lineTo(cx, y + h);
+      ctx.lineTo(x, cy);
+      ctx.closePath();
+      break;
+    }
+    case "hexagon":
+    case "octagon": {
+      const n = shape === "hexagon" ? 6 : 8;
+      const step = (Math.PI * 2) / n;
+      for (let i = 0; i < n; i++) {
+        const a = step * i - Math.PI / 2;
+        const px = cx + (w / 2) * Math.cos(a);
+        const py = cy + (h / 2) * Math.sin(a);
+        if (i === 0) ctx.moveTo(px, py);
+        else ctx.lineTo(px, py);
+      }
+      ctx.closePath();
+      break;
+    }
+    default: {
+      const radius = shape === "rounded" ? Math.min(14 * SCALE, w * 0.12) : 0;
+      if (radius > 0) roundRectPath(ctx, x, y, w, h, radius);
+      else ctx.rect(x, y, w, h);
+    }
+  }
+}
+
+/** Draw the border of a custom stamp (single or double ring / outline). */
+function drawCustomBorder(
+  ctx: CanvasRenderingContext2D,
+  p: StampParams,
+  W: number,
+  H: number
+): void {
+  const cx = W / 2;
+  const cy = H / 2;
+  const pad = 12 * SCALE;
+  const isRound = p.shape === "circle" || p.shape === "double-circle";
+  const ink = inkColor(p);
+
+  ctx.strokeStyle = ink;
+  ctx.lineWidth = borderWidthPts(p, isRound ? 5 : 3.5) * SCALE;
+  traceShapePath(ctx, p.shape, cx, cy, W, H, pad / 2);
+  ctx.stroke();
+
+  const inner = p.shape === "double-circle" || p.borderStyle === "double";
+  if (inner) {
+    ctx.lineWidth = 1.8 * p.borderThickness * SCALE;
+    if (isRound) {
+      ctx.beginPath();
+      ctx.arc(cx, cy, Math.min(W, H) / 2 - pad / 2, 0, Math.PI * 2);
+      ctx.stroke();
+      // the inner ring sits at 0.82 of the outer radius
+      ctx.beginPath();
+      ctx.arc(cx, cy, (Math.min(W, H) / 2 - pad / 2) * 0.82, 0, Math.PI * 2);
+      ctx.stroke();
+    } else {
+      traceShapePath(ctx, p.shape, cx, cy, W, H, pad / 2 + 6 * SCALE);
+      ctx.stroke();
+    }
+  }
+}
+
+/** Height (pt) for a custom text-block stamp: adapts to the lowest text block, but never
+ *  below the shape's natural minimum aspect. Circle shapes are always square. */
+function customHeightPts(p: StampParams): number {
+  const isRound = p.shape === "circle" || p.shape === "double-circle";
+  if (isRound) return p.widthPts;
+  const blocks = (p.textBlocks || []).filter((b) => b.text.trim());
+  let contentH = p.widthPts * 0.42;
+  for (const b of blocks) {
+    const need = (b.size / 2 + 19) / Math.max(0.06, 1 - Math.min(b.y, 96) / 100);
+    if (need > contentH) contentH = need;
+  }
+  return Math.max(p.widthPts * aspectForShape(p.shape), contentH + 40);
+}
+
+/** Generic renderer for custom stamps: an outline shape with freely placed text blocks. */
+function renderCustomStamp(
+  ctx: CanvasRenderingContext2D,
+  p: StampParams,
+  W: number,
+  H: number
+): void {
+  const pad = 12 * SCALE;
+  const ink = inkColor(p);
+  const blocks = (p.textBlocks || []).filter((b) => b.text.trim());
+  const isRound = p.shape === "circle" || p.shape === "double-circle";
+
+  drawCustomBorder(ctx, p, W, H);
+  if (!blocks.length) return;
+
+  const contentTop = pad * 1.6;
+  const contentBottom = H - pad * 1.6;
+  const contentH = contentBottom - contentTop;
+  const innerW = W - pad * 2.2;
+  const maxW = isRound ? Math.min(innerW, (Math.min(W, H) - pad * 2) * 0.72) : innerW;
+
+  const positioned = blocks.map((b) => ({ b, y: contentTop + (Math.min(b.y, 96) / 100) * contentH }));
+
+  if (p.divider && positioned.length > 1) {
+    for (let i = 0; i < positioned.length - 1; i++) {
+      const midY = (positioned[i].y + positioned[i + 1].y) / 2;
+      wavyLine(
+        ctx,
+        W / 2 - innerW * 0.3,
+        W / 2 + innerW * 0.3,
+        midY,
+        3 * SCALE,
+        rgba(p.inkColor, Math.min(1, p.opacity * 0.9)),
+        1.4 * p.borderThickness * SCALE
+      );
+    }
+  }
+
+  for (const { b, y } of positioned) {
+    const desired = b.size * SCALE;
+    const size = Math.min(desired, fitFontSize(ctx, b.text, maxW, desired, 6 * SCALE));
+    setFont(ctx, p.fontFamily, size, p.bold, p.italic);
+    if (b.align === "center") {
+      fillTextStyled(ctx, b.text, W / 2, y, ink, "center", p.underline, size);
+    } else {
+      const edge = b.align === "left" ? pad * 1.7 : W - pad * 1.7;
+      fillTextStyled(ctx, b.text, edge, y, ink, b.align, p.underline, size);
+    }
+  }
+}
+
 /** Render one stamp. */
 export function renderStamp(params: StampParams): RenderResult {
   const wPts = params.widthPts;
-  const hPts = Math.max(24, wPts * params.aspect);
+  const hPts =
+    params.textBlocks && params.textBlocks.length > 0
+      ? customHeightPts(params)
+      : Math.max(24, wPts * params.aspect);
   const W = Math.round(wPts * SCALE);
   const H = Math.round(hPts * SCALE);
 
@@ -246,6 +406,9 @@ export function renderStamp(params: StampParams): RenderResult {
   const fontSizePx = p.fontSize * SCALE;
   const ink = inkColor(p);
 
+  if (p.textBlocks && p.textBlocks.length > 0) {
+    renderCustomStamp(ctx, p, W, H);
+  } else {
   switch (p.shape) {
     case "circle": {
       const R = Math.min(W, H) / 2 - 10 * SCALE;
@@ -419,6 +582,7 @@ export function renderStamp(params: StampParams): RenderResult {
       setFont(ctx, p.fontFamily, mainSize, p.bold, p.italic);
       centerText(ctx, p.mainText, cx, cy, ink);
     }
+  }
   }
 
   const dataUrl = canvas.toDataURL("image/png");

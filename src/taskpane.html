@@ -95,6 +95,13 @@
       background: rgba(198, 40, 40, 0.07);
       box-shadow: 0 0 0 1px var(--accent);
     }
+    #templateGrid button.saved-chip-btn {
+      border-style: dashed;
+      color: var(--accent);
+      font-size: 10.5px;
+      text-transform: none;
+    }
+    #templateGrid button.saved-chip-btn:hover { border-color: var(--accent); }
 
     .field { margin: 10px 0; }
     .field label { display: block; font-size: 11.5px; font-weight: 600; color: var(--ink); margin-bottom: 4px; }
@@ -182,6 +189,45 @@
     }
     .primary-btn:hover { background: var(--accent-dark); }
     .primary-btn:disabled { background: #c9cdd4; cursor: not-allowed; }
+
+    /* custom builder: text blocks + saved designs */
+    .ghost-btn {
+      border: 1px solid var(--line); background: var(--panel);
+      border-radius: 7px; padding: 7px 10px; font-size: 12px; font-weight: 600;
+      cursor: pointer; color: var(--ink); white-space: nowrap;
+    }
+    .ghost-btn:hover { border-color: #c9cdd4; }
+    .ghost-btn.strong { color: var(--accent); border-color: rgba(198,40,40,0.4); }
+    .ghost-btn.strong:hover { background: rgba(198,40,40,0.06); }
+    .block-row {
+      border: 1px solid var(--line); border-radius: 8px;
+      padding: 8px 9px; margin-bottom: 8px; background: var(--panel);
+    }
+    .block-row .block-opts { margin-top: 6px; align-items: center; }
+    .block-row .block-opts .field { margin: 0; min-width: 0; }
+    .block-row .block-opts .field label { font-size: 10.5px; color: var(--muted); }
+    .block-row .block-opts input[type="range"] { flex: 1; accent-color: var(--accent); min-width: 0; }
+    .block-row .block-opts .yval { font-size: 11px; font-weight: 600; min-width: 30px; text-align: right; color: var(--muted); }
+    .block-row .block-opts select { flex: 0 0 auto; width: auto; padding: 5px 6px; font-size: 12px; }
+    .block-del {
+      border: none; background: transparent; color: var(--muted);
+      cursor: pointer; font-size: 14px; flex: 0 0 auto; padding: 2px 4px;
+    }
+    .block-del:hover { color: var(--accent); }
+    #addBlockBtn { width: 100%; }
+    .save-design { margin-top: 4px; }
+    #savedDesigns { margin-top: 8px; display: flex; flex-direction: column; gap: 6px; }
+    .saved-chip {
+      display: flex; align-items: center; gap: 6px;
+      border: 1px solid var(--line); background: var(--panel);
+      border-radius: 7px; padding: 6px 9px; font-size: 12px; cursor: pointer;
+    }
+    .saved-chip:hover { border-color: #c9cdd4; }
+    .saved-chip .del {
+      margin-left: auto; border: none; background: transparent;
+      color: var(--muted); cursor: pointer; font-size: 12px;
+    }
+    .saved-chip .del:hover { color: var(--accent); }
 
     .edit-banner {
       display: flex; align-items: center; gap: 8px;
@@ -289,34 +335,51 @@
         <div class="section-label">Choose a design</div>
         <div id="templateGrid"></div>
 
-        <div class="section-label">Text</div>
-        <div class="field">
-          <label for="mainText">Stamp text</label>
-          <input type="text" id="mainText" maxlength="48" />
+        <!-- Legacy single/multi-field text entry (used by the fixed templates) -->
+        <div id="legacyTextSection">
+          <div class="section-label">Text</div>
+          <div class="field">
+            <label for="mainText">Stamp text</label>
+            <input type="text" id="mainText" maxlength="48" />
+          </div>
+          <div class="field" id="secondLineField" hidden>
+            <label for="secondLine">Second line</label>
+            <input type="text" id="secondLine" maxlength="48" />
+          </div>
+          <div class="field" id="secondLineSizeField" hidden>
+            <label for="secondLineSize">Second line size</label>
+            <input type="number" id="secondLineSize" min="6" max="60" value="11" />
+          </div>
+          <div class="row" id="dateRow" hidden>
+            <label class="check"><input type="checkbox" id="addDate" /> Add date</label>
+            <input type="text" id="dateText" placeholder="17 AUG 2026" />
+          </div>
+          <div class="field" id="refField" hidden>
+            <label for="refText">Reference / number</label>
+            <input type="text" id="refText" maxlength="24" />
+          </div>
+          <div class="field" id="deptField" hidden>
+            <label for="deptText">Department / office</label>
+            <input type="text" id="deptText" maxlength="28" />
+          </div>
+          <div class="field" id="nameField" hidden>
+            <label for="nameText">Name / signatory</label>
+            <input type="text" id="nameText" maxlength="28" />
+          </div>
         </div>
-        <div class="field" id="secondLineField" hidden>
-          <label for="secondLine">Second line</label>
-          <input type="text" id="secondLine" maxlength="48" />
-        </div>
-        <div class="field" id="secondLineSizeField" hidden>
-          <label for="secondLineSize">Second line size</label>
-          <input type="number" id="secondLineSize" min="6" max="60" value="11" />
-        </div>
-        <div class="row" id="dateRow" hidden>
-          <label class="check"><input type="checkbox" id="addDate" /> Add date</label>
-          <input type="text" id="dateText" placeholder="17 AUG 2026" />
-        </div>
-        <div class="field" id="refField" hidden>
-          <label for="refText">Reference / number</label>
-          <input type="text" id="refText" maxlength="24" />
-        </div>
-        <div class="field" id="deptField" hidden>
-          <label for="deptText">Department / office</label>
-          <input type="text" id="deptText" maxlength="28" />
-        </div>
-        <div class="field" id="nameField" hidden>
-          <label for="nameText">Name / signatory</label>
-          <input type="text" id="nameText" maxlength="28" />
+
+        <!-- CUSTOM builder: freely placed text blocks + saved designs -->
+        <div id="customTextSection" hidden>
+          <div class="section-label">Text <span class="hint">— add as many lines as you need</span></div>
+          <div id="textBlocksList"></div>
+          <button id="addBlockBtn" type="button" class="ghost-btn">＋ Add text</button>
+          <div class="save-design">
+            <div class="row" style="margin-top:12px">
+              <input type="text" id="designName" placeholder="Design name, e.g. My stamp" maxlength="32" />
+              <button id="saveDesignBtn" type="button" class="ghost-btn strong">💾 Save design</button>
+            </div>
+            <div id="savedDesigns"></div>
+          </div>
         </div>
 
         <div class="section-label">Style</div>
@@ -352,7 +415,7 @@
             <label for="fontFamily">Font</label>
             <select id="fontFamily"></select>
           </div>
-          <div class="field" style="margin:0">
+          <div id="fontSizeField" class="field" style="margin:0">
             <label for="fontSize">Main text size</label>
             <input type="number" id="fontSize" min="8" max="72" value="18" />
           </div>
@@ -364,11 +427,13 @@
               <label class="check"><input type="checkbox" id="boldChk" checked /> B</label>
               <label class="check"><input type="checkbox" id="italicChk" /> I</label>
               <label class="check"><input type="checkbox" id="underlineChk" /> U</label>
-              <select id="alignSelect" style="flex:1.4">
-                <option value="center" selected>Center</option>
-                <option value="left">Left</option>
-                <option value="right">Right</option>
-              </select>
+              <div id="alignField" style="flex:1.4">
+                <select id="alignSelect">
+                  <option value="center" selected>Center</option>
+                  <option value="left">Left</option>
+                  <option value="right">Right</option>
+                </select>
+              </div>
             </div>
           </div>
           <div class="field" style="margin:0">
